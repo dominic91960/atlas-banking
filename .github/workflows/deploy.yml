@@ -1,0 +1,212 @@
+name: CI/CD - Deploy to VPS
+
+on:
+  push:
+    branches:
+      - main
+
+  workflow_dispatch:
+    inputs:
+      deploy_target:
+        description: "What to deploy"
+        required: true
+        type: choice
+        options:
+          - client
+          - server
+          - both
+
+env:
+  CLIENT_CONTAINER: ${{ github.event.repository.name }}-client
+  CLIENT_ENV_B64: ${{ secrets.CLIENT_ENV_B64 }}
+  CLIENT_IMAGE: ghcr.io/${{ github.repository }}-client
+
+  GHCR_PAT: ${{ secrets.GHCR_PAT }}
+  NPM_NETWORK: ${{ secrets.NPM_NETWORK }}
+
+  SERVER_CONTAINER: ${{ github.event.repository.name }}-server
+  SERVER_ENV_B64: ${{ secrets.SERVER_ENV_B64 }}
+  SERVER_IMAGE: ghcr.io/${{ github.repository }}-server
+
+  GITHUB_USER: ${{ github.actor }}
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    if: github.repository == 'dominic91960/atlas-banking' && github.event_name != 'workflow_dispatch'
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      deploy-client: ${{ steps.filter.outputs.client }}
+      deploy-server: ${{ steps.filter.outputs.server }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changes
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            client:
+              - 'client/**'
+              - '.github/**'
+            server:
+              - 'server/**'
+              - '.github/**'
+
+  deploy-client:
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: |
+      always() &&
+      github.repository == 'dominic91960/atlas-banking' &&
+      (
+        needs.detect-changes.outputs.deploy-client == 'true' ||
+        (github.event_name == 'workflow_dispatch' &&
+          (
+            github.event.inputs.deploy_target == 'client' ||
+            github.event.inputs.deploy_target == 'both'
+          )
+        )
+      )
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ env.GITHUB_USER }}
+          password: ${{ secrets.GHCR_PAT }}
+
+      - name: Generate .env file
+        run: echo "$CLIENT_ENV_B64" | base64 -d > ./client/.env.production
+
+      - name: Build and Push Client Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./client
+          push: true
+          tags: ${{ env.CLIENT_IMAGE }}:latest
+          cache-from: type=registry,ref=${{ env.CLIENT_IMAGE }}:buildcache
+          cache-to: type=registry,ref=${{ env.CLIENT_IMAGE }}:buildcache,mode=max
+          platforms: linux/amd64
+
+      - name: Deploy Client on VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          envs: CLIENT_CONTAINER,CLIENT_IMAGE,GHCR_PAT,NPM_NETWORK,GITHUB_USER
+          script: |
+            echo "$GHCR_PAT" | docker login ghcr.io -u $GITHUB_USER --password-stdin
+
+            docker pull $CLIENT_IMAGE:latest
+            docker stop $CLIENT_CONTAINER || true
+            docker rm $CLIENT_CONTAINER || true
+
+            docker run -d \
+              --name $CLIENT_CONTAINER \
+              -p 3001:3000 \
+              --restart=always \
+              $CLIENT_IMAGE:latest
+
+            docker network connect $NPM_NETWORK $CLIENT_CONTAINER || true
+
+  deploy-server:
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: |
+      always() &&
+      github.repository == 'dominic91960/atlas-banking' &&
+      (
+        needs.detect-changes.outputs.deploy-server == 'true' ||
+        (github.event_name == 'workflow_dispatch' &&
+          (
+            github.event.inputs.deploy_target == 'server' ||
+            github.event.inputs.deploy_target == 'both'
+          )
+        )
+      )
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ env.GITHUB_USER }}
+          password: ${{ secrets.GHCR_PAT }}
+
+      - name: Build and Push Server Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./server
+          push: true
+          tags: ${{ env.SERVER_IMAGE }}:latest
+          cache-from: type=registry,ref=${{ env.SERVER_IMAGE }}:buildcache
+          cache-to: type=registry,ref=${{ env.SERVER_IMAGE }}:buildcache,mode=max
+          platforms: linux/amd64
+
+      - name: Deploy Server on VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          envs: SERVER_CONTAINER,SERVER_IMAGE,GHCR_PAT,NPM_NETWORK,SERVER_ENV_B64,GITHUB_USER
+          script: |
+            echo "$GHCR_PAT" | docker login ghcr.io -u $GITHUB_USER --password-stdin
+
+            docker pull $SERVER_IMAGE:latest
+            docker stop $SERVER_CONTAINER || true
+            docker rm $SERVER_CONTAINER || true
+
+            cd /home/ubuntu
+            echo "$SERVER_ENV_B64" | base64 -d > .env
+            PORT=$(grep PORT .env | cut -d '=' -f2 | tr -d '\r\n\t ' | head -n1)
+
+            docker run -d \
+              --name $SERVER_CONTAINER \
+              --env-file .env \
+              -p ${PORT}:${PORT} \
+              $SERVER_IMAGE:latest
+
+            rm -f .env
+            docker network connect $NPM_NETWORK $SERVER_CONTAINER || true
+            docker update --restart=always $SERVER_CONTAINER
+
+  cleanup-vps:
+    runs-on: ubuntu-latest
+    needs: [deploy-client, deploy-server]
+    if: github.repository == 'dominic91960/atlas-banking' && always()
+
+    steps:
+      - name: Cleanup Docker resources on VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            docker image prune -f
+            docker image prune -a -f --filter "until=24h"
+            docker container prune -f --filter "until=24h"
+            docker volume prune -f
+            docker builder prune -f --filter "until=24h"
