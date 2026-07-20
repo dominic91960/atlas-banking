@@ -1,25 +1,35 @@
+@import url("https://fonts.googleapis.com/css2?family=Special+Gothic+Expanded+One&family=Special+Gothic:wght@400..700&display=swap");
 @import "tailwindcss";
 
-@font-face {
-  font-family: "Squares Bold";
-  src: url("/fonts/squares-bold/squares-bold.otf") format("opentype");
-  font-weight: 400;
-  font-style: normal;
-}
-
 @theme {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-primary: #c2c2c2;
-  --color-shadow: #0d0d0d1a;
+  --color-primary: #ffff00;
+  --color-secondary: #151515;
+  --color-success: #00ff00;
+  --color-error: #ff0000;
 
-  --font-primary: "Squares Bold", sans-serif;
-  --font-secondary: "Chakra Petch", sans-serif;
+  --color-neutral-100: #ffffff;
+  --color-neutral-200: #dfdfdf;
+  --color-neutral-300: #c1c1c1;
+  --color-neutral-400: #9f9f9f;
+  --color-neutral-500: #818181;
+  --color-neutral-600: #606060;
+  --color-neutral-700: #404040;
+  --color-neutral-800: #202020;
+  --color-neutral-900: #000000;
+
+  --font-title: "Special Gothic Expanded One", sans-serif;
+  --font-primary: "Special Gothic", sans-serif;
 
   --spacing-container: var(--container-padding);
 }
 
 @layer base {
+  body {
+    background-color: var(--color-secondary);
+    color: var(--color-neutral-300);
+    font-family: var(--font-primary);
+  }
+
   * {
     scrollbar-width: thin;
   }
@@ -28,56 +38,20 @@
     color: var(--color-primary);
     background: none;
   }
+
+  button,
+  label {
+    cursor: pointer;
+  }
 }
 
-:root {
-  --breakpoint-width: 0px;
-
-  --background: #ffffff;
-  --foreground: #0d0d0d;
-
-  --container-padding: 15px;
-  --overflow: var(--container-padding);
+@utility transition-default {
+  @apply duration-300 ease-in;
 }
 
-@media (prefers-color-scheme: dark) {
+/* @media (prefers-color-scheme: light) {
   :root {
     --background: #0d0d0d;
     --foreground: #ffffff;
   }
-}
-
-@media only screen and (min-width: 640px) {
-  :root {
-    --container-padding: 20px;
-    --overflow: calc(((100vw - 640px) / 2) + var(--container-padding));
-  }
-}
-
-@media only screen and (min-width: 768px) {
-  :root {
-    --container-padding: 30px;
-    --overflow: calc(((100vw - 768px) / 2) + var(--container-padding));
-  }
-}
-
-@media only screen and (min-width: 1024px) {
-  :root {
-    --container-padding: 40px;
-    --overflow: calc(((100vw - 1024px) / 2) + var(--container-padding));
-  }
-}
-
-@media only screen and (min-width: 1280px) {
-  :root {
-    --container-padding: 45px;
-    --overflow: calc(((100vw - 1280px) / 2) + var(--container-padding));
-  }
-}
-
-@media only screen and (min-width: 1536px) {
-  :root {
-    --container-padding: 50px;
-    --overflow: calc(((100vw - 1536px) / 2) + var(--container-padding));
-  }
-}
+} */
