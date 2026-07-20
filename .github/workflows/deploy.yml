@@ -178,9 +178,13 @@ jobs:
             docker stop $SERVER_CONTAINER || true
             docker rm $SERVER_CONTAINER || true
 
-            cd /home/ubuntu
+            cd "$HOME"
             echo "$SERVER_ENV_B64" | base64 -d > .env
-            PORT=$(grep PORT .env | cut -d '=' -f2 | tr -d '\r\n\t ' | head -n1)
+            PORT=$(grep -m1 '^PORT=' .env | cut -d '=' -f2 | tr -d '\r\n\t ')
+            if [ -z "$PORT" ]; then
+              echo "ERROR: PORT not found in .env"
+              exit 1
+            fi
 
             docker run -d \
               --name $SERVER_CONTAINER \
