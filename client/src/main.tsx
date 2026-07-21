@@ -6,6 +6,7 @@ import { RouterProvider } from "react-router/dom";
 
 import App from "./App.tsx";
 import "./index.css";
+import ToastContainer from "./components/global/ui/ToastContainer.tsx";
 
 const router = createBrowserRouter([
   {
@@ -17,5 +18,6 @@ const router = createBrowserRouter([
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <RouterProvider router={router} />
+    <ToastContainer />
   </StrictMode>,
 );
