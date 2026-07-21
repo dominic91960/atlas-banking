@@ -6,7 +6,7 @@ import PrimaryButton from "../../global/ui/PrimaryButton";
 import { nicStepSchema, type TNicStep } from "../../../lib/validations/sign-up";
 
 type BankAccFormProps = {
-  onComplete: (nic: string, bankAccNo: string) => void;
+  onComplete: (data: TNicStep) => void;
 };
 
 const BankAccForm: React.FC<BankAccFormProps> = ({ onComplete }) => {
@@ -18,15 +18,10 @@ const BankAccForm: React.FC<BankAccFormProps> = ({ onComplete }) => {
     resolver: zodResolver(nicStepSchema),
   });
 
-  const onSubmit = (data: TNicStep) => {
-    // TODO: verify NIC against backend — if found, backend sends OTP
-    onComplete(data.nic, data.bankAccNo);
-  };
-
   return (
     <form
       className="flex grow flex-col justify-between"
-      onSubmit={handleSubmit(onSubmit)}
+      onSubmit={handleSubmit(onComplete)}
     >
       {/* Text Wrapper */}
       <div className="space-y-4">
@@ -55,8 +50,8 @@ const BankAccForm: React.FC<BankAccFormProps> = ({ onComplete }) => {
           type="text"
           id="bank-acc-no"
           label="Enter your Bank Account Number"
-          {...register("bankAccNo")}
-          errorMessage={errors.bankAccNo?.message}
+          {...register("accountNumber")}
+          errorMessage={errors.accountNumber?.message}
         />
       </div>
 

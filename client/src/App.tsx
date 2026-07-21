@@ -1,54 +1,9 @@
-import { useState } from "react";
-import { AxiosError } from "axios";
-
-import api from "./lib/axios-instance";
-import BankAccForm from "./components/client-side/sign-up/BankAccForm";
 import Globe from "./components/global/icons/Globe";
 import Logo from "./components/global/icons/Logo";
-import OTPForm from "./components/client-side/sign-up/OTPForm";
 import PixelAnimation from "./components/client-side/PixelAnimation";
-import SignUpForm from "./components/client-side/sign-up/SignUpForm";
+import SignUpFlow from "./components/client-side/sign-up/SignUpFlow";
 
 const App = () => {
-  const [step, setStep] = useState<1 | 2 | 3>(1);
-
-  const handleNICComplete = async (nic: string, bankAccNo: string) => {
-    try {
-      const res = await api.post("/auth/register/start", {
-        accountNumber: bankAccNo,
-        nic,
-      });
-
-      console.log(res);
-      if (res.status === 200) setStep(2);
-    } catch (err) {
-      let errorMessage = "Something went wrong. Please try again.";
-
-      if (err instanceof AxiosError) {
-        errorMessage = err.message;
-      } else if (err instanceof Error) {
-        errorMessage = err.message;
-      }
-      console.log(errorMessage);
-      // toast.error(errorMessage);
-    }
-  };
-
-  const handleOtpVerify = (otp: string) => {
-    console.log("otp:", otp);
-    setStep(3);
-  };
-
-  const handlePasswordComplete = (
-    username: string,
-    password: string,
-    confirmPassword: string,
-  ) => {
-    console.log("username:", username);
-    console.log("password:", password);
-    console.log("confirmPassword:", confirmPassword);
-  };
-
   return (
     <main className="flex h-dvh p-8">
       {/* Container */}
@@ -65,16 +20,7 @@ const App = () => {
 
           {/* Form Area */}
           <div className="bg-secondary flex grow px-8 py-10">
-            {step == 1 && <BankAccForm onComplete={handleNICComplete} />}
-            {step == 2 && (
-              <OTPForm onVerify={handleOtpVerify} onBack={() => setStep(1)} />
-            )}
-            {step == 3 && (
-              <SignUpForm
-                onBack={() => setStep(2)}
-                onComplete={handlePasswordComplete}
-              />
-            )}
+            <SignUpFlow />
           </div>
 
           {/* Bottom Area */}

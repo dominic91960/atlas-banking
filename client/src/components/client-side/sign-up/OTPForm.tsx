@@ -8,15 +8,22 @@ import PrimaryButton from "../../global/ui/PrimaryButton";
 import SecondaryButton from "../../global/ui/SecondaryButton";
 import { otpStepSchema, type TOtpStep } from "../../../lib/validations/sign-up";
 
-const OTP_RESEND_COOLDOWN = 60;
-
 type OTPFormProps = {
+  email: string;
+  expiresIn: number;
   onBack: () => void;
-  onVerify: (otp: string) => void;
+  onOTPResend: () => void;
+  onVerify: (data: TOtpStep) => void;
 };
 
-const OTPForm: React.FC<OTPFormProps> = ({ onBack, onVerify }) => {
-  const [resendCooldown, setResendCooldown] = useState(OTP_RESEND_COOLDOWN);
+const OTPForm: React.FC<OTPFormProps> = ({
+  email,
+  expiresIn,
+  onBack,
+  onOTPResend,
+  onVerify,
+}) => {
+  const [resendCooldown, setResendCooldown] = useState(expiresIn);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const startInterval = () => {
@@ -49,22 +56,17 @@ const OTPForm: React.FC<OTPFormProps> = ({ onBack, onVerify }) => {
     defaultValues: { otp: "" },
   });
 
-  const onSubmit = (data: TOtpStep) => {
-    // TODO: verify OTP against backend
-    onVerify(data.otp);
-  };
-
   const handleResend = () => {
     if (resendCooldown > 0) return;
-    setResendCooldown(OTP_RESEND_COOLDOWN);
-    // TODO: trigger backend to resend OTP
+    setResendCooldown(expiresIn);
+    onOTPResend();
     startInterval();
   };
 
   return (
     <form
       className="flex grow flex-col justify-between"
-      onSubmit={handleSubmit(onSubmit)}
+      onSubmit={handleSubmit(onVerify)}
     >
       {/* Text Wrapper */}
       <div className="space-y-4">
@@ -72,8 +74,7 @@ const OTPForm: React.FC<OTPFormProps> = ({ onBack, onVerify }) => {
           Get started with atlas today
         </h4>
         <p className="min-[1920px]:text-[20px]">
-          Please check the inbox of your email that is associated with your bank
-          account for a 6 digit pin.
+          Please check your inbox ({email}) for a 6 digit pin.
         </p>
       </div>
 

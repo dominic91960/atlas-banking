@@ -13,21 +13,18 @@ export const nicStepSchema = z.object({
       (val) => NID_OLD_FORMAT.test(val) || NID_NEW_FORMAT.test(val),
       "Enter a valid NIC number (e.g. 911042754V or a 12-digit number)",
     ),
-  bankAccNo: z
+  accountNumber: z
     .string()
     .min(1, "Account number is required")
-    .length(8, "Account number must be exactly 8 characters")
-    .regex(
-      /^[A-Za-z0-9]+$/,
-      "Account number can only contain letters and numbers",
-    ),
+    .length(12, "Account number must be exactly 12 characters")
+    .regex(/^[0-9]+$/, "Account number must only contain numbers"),
 });
 
 export const otpStepSchema = z.object({
   otp: z
     .string()
     .length(6, "Please enter the complete 6-digit code")
-    .regex(/^[A-Za-z0-9]+$/, "Code must contain digits and letters only"),
+    .regex(/^[0-9]+$/, "Code must only contain numbers"),
 });
 
 export const signUpStepSchema = z

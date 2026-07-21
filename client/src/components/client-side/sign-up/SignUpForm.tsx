@@ -12,11 +12,7 @@ import SecondaryButton from "../../global/ui/SecondaryButton";
 
 type SignUpFormProps = {
   onBack: () => void;
-  onComplete: (
-    username: string,
-    password: string,
-    confirmPassword: string,
-  ) => void;
+  onComplete: (data: TSignUpStep) => void;
 };
 
 const SignUpForm: React.FC<SignUpFormProps> = ({ onComplete, onBack }) => {
@@ -28,15 +24,10 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ onComplete, onBack }) => {
     resolver: zodResolver(signUpStepSchema),
   });
 
-  const onSubmit = (data: TSignUpStep) => {
-    // TODO: send final registration payload to backend
-    onComplete(data.username, data.password, data.confirmPassword);
-  };
-
   return (
     <form
       className="flex grow flex-col justify-between"
-      onSubmit={handleSubmit(onSubmit)}
+      onSubmit={handleSubmit(onComplete)}
     >
       {/* Text Wrapper */}
       <div className="space-y-4">
