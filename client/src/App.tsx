@@ -1,9 +1,7 @@
-import PixelBlast from "./components/ui/PixelBlast";
-
-import Globe from "./components/icons/Globe";
-import Logo from "./components/icons/Logo";
-import InputGroup from "./components/ui/InputGroup";
-import PrimaryButton from "./components/ui/PrimaryButton";
+import SignUpForm from "./components/client-side/sign-up/SignUpForm";
+import Globe from "./components/global/icons/Globe";
+import Logo from "./components/global/icons/Logo";
+import PixelBlast from "./components/global/ui/PixelBlast";
 
 const App = () => {
   return (
@@ -48,46 +46,11 @@ const App = () => {
           </div>
 
           {/* Form Area */}
-          <form className="bg-secondary flex grow flex-col justify-between px-8 py-10">
-            {/* Text Wrapper */}
-            <div className="space-y-4">
-              <h4 className="font-title text-[20px] text-neutral-100 uppercase">
-                Get started with atlas today
-              </h4>
-              <p className="min-[1920px]:text-[20px]">
-                Let’s register to Atlas’s online banking service. Please note
-                that you must already have an Atlas Banking account to proceed.
-              </p>
-            </div>
-
-            {/* Input Wrapper */}
-            <div className="space-y-9">
-              {/* NIC number */}
-              <InputGroup
-                type="text"
-                id="nic"
-                name="nic"
-                errorMessage="Invalid NIC number format"
-              />
-
-              {/* NIC number */}
-              <InputGroup
-                type="text"
-                id="nic"
-                name="nic"
-                errorMessage="Invalid NIC number format"
-              />
-            </div>
-
-            {/* CTA Wrapper */}
-            <div className="space-y-4">
-              <PrimaryButton text="Sign up" />
-              <div className="flex items-center justify-between">
-                <p>Have an account already?</p>
-                <p>Sign In</p>
-              </div>
-            </div>
-          </form>
+          <div className="bg-secondary flex grow px-8 py-10">
+            {/* <BankAccForm /> */}
+            {/* <OTPForm /> */}
+            <SignUpForm />
+          </div>
 
           {/* Bottom Area */}
           <div className="bg-secondary relative hidden h-25 min-[1920px]:block min-[1920px]:h-40">

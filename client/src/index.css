@@ -43,6 +43,16 @@
   label {
     cursor: pointer;
   }
+
+  input:-webkit-autofill,
+  textarea:-webkit-autofill,
+  select:-webkit-autofill {
+    box-shadow: 0 0 0 1000px var(--color-neutral-800) inset !important;
+    caret-color: var(--color-neutral-300) !important;
+    transition: background-color 9999s ease-in-out 0s;
+    -webkit-box-shadow: 0 0 0 1000px var(--color-neutral-800) inset !important;
+    -webkit-text-fill-color: var(--color-neutral-300) !important;
+  }
 }
 
 @utility transition-default {

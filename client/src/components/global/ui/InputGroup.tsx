@@ -1,17 +1,22 @@
-import { cn } from "../../lib/utils";
+import { cn } from "../../../lib/utils";
 
 type InputAreaProps = React.DetailedHTMLProps<
   React.InputHTMLAttributes<HTMLInputElement>,
   HTMLInputElement
 > & {
+  label: string;
   errorMessage?: string;
 };
 
-const InputGroup: React.FC<InputAreaProps> = ({ errorMessage, ...props }) => {
+const InputGroup: React.FC<InputAreaProps> = ({
+  label,
+  errorMessage,
+  ...props
+}) => {
   return (
     <div className="relative flex flex-col gap-2 pb-7">
       <label htmlFor={props.id} className="block w-fit">
-        Enter your NIC Number
+        {label}
       </label>
       <input
         className={cn(
