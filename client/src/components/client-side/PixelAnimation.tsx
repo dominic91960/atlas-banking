@@ -24,7 +24,7 @@ const PixelAnimation = () => {
       />
 
       <div className="pointer-events-none absolute right-0 bottom-0 size-fit p-9">
-        <h1 className="font-title text-right text-[96px] leading-[1.3em] text-neutral-50 uppercase min-[1920px]:text-[128px]">
+        <h1 className="font-title text-right text-[96px] leading-[1.3em] text-neutral-100 uppercase min-[1920px]:text-[128px]">
           The <br /> secure <br /> way <br /> forward
           <span className="text-primary">.</span>
         </h1>

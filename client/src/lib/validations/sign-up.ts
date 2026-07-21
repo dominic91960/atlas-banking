@@ -16,7 +16,7 @@ export const nicStepSchema = z.object({
   bankAccNo: z
     .string()
     .min(1, "Account number is required")
-    .length(16, "Account number must be exactly 16 characters")
+    .length(8, "Account number must be exactly 8 characters")
     .regex(
       /^[A-Za-z0-9]+$/,
       "Account number can only contain letters and numbers",

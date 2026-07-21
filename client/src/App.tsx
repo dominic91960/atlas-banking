@@ -1,5 +1,7 @@
 import { useState } from "react";
+import { AxiosError } from "axios";
 
+import api from "./lib/axios-instance";
 import BankAccForm from "./components/client-side/sign-up/BankAccForm";
 import Globe from "./components/global/icons/Globe";
 import Logo from "./components/global/icons/Logo";
@@ -10,10 +12,26 @@ import SignUpForm from "./components/client-side/sign-up/SignUpForm";
 const App = () => {
   const [step, setStep] = useState<1 | 2 | 3>(1);
 
-  const handleNICComplete = (nic: string, bankAccNo: string) => {
-    console.log("nic:", nic);
-    console.log("acc no:", bankAccNo);
-    setStep(2);
+  const handleNICComplete = async (nic: string, bankAccNo: string) => {
+    try {
+      const res = await api.post("/auth/register/start", {
+        accountNumber: bankAccNo,
+        nic,
+      });
+
+      console.log(res);
+      if (res.status === 200) setStep(2);
+    } catch (err) {
+      let errorMessage = "Something went wrong. Please try again.";
+
+      if (err instanceof AxiosError) {
+        errorMessage = err.message;
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+      console.log(errorMessage);
+      // toast.error(errorMessage);
+    }
   };
 
   const handleOtpVerify = (otp: string) => {
