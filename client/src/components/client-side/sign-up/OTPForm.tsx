@@ -1,9 +1,71 @@
+import { useEffect, useRef, useState } from "react";
+
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+
 import InputGroup from "../../global/ui/InputGroup";
 import PrimaryButton from "../../global/ui/PrimaryButton";
+import SecondaryButton from "../../global/ui/SecondaryButton";
+import { otpStepSchema, type TOtpStep } from "../../../lib/validations/sign-up";
 
-const OTPForm = () => {
+const OTP_RESEND_COOLDOWN = 60;
+
+type OTPFormProps = {
+  onBack: () => void;
+  onVerify: (otp: string) => void;
+};
+
+const OTPForm: React.FC<OTPFormProps> = ({ onBack, onVerify }) => {
+  const [resendCooldown, setResendCooldown] = useState(OTP_RESEND_COOLDOWN);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const startInterval = () => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    const id = setInterval(() => {
+      setResendCooldown((prev) => {
+        if (prev <= 1) {
+          clearInterval(id);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    intervalRef.current = id;
+  };
+
+  useEffect(() => {
+    startInterval();
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, []);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<TOtpStep>({
+    resolver: zodResolver(otpStepSchema),
+    defaultValues: { otp: "" },
+  });
+
+  const onSubmit = (data: TOtpStep) => {
+    // TODO: verify OTP against backend
+    onVerify(data.otp);
+  };
+
+  const handleResend = () => {
+    if (resendCooldown > 0) return;
+    setResendCooldown(OTP_RESEND_COOLDOWN);
+    // TODO: trigger backend to resend OTP
+    startInterval();
+  };
+
   return (
-    <form className="flex grow flex-col justify-between">
+    <form
+      className="flex grow flex-col justify-between"
+      onSubmit={handleSubmit(onSubmit)}
+    >
       {/* Text Wrapper */}
       <div className="space-y-4">
         <h4 className="font-title text-[20px] text-neutral-100 uppercase">
@@ -16,21 +78,34 @@ const OTPForm = () => {
       </div>
 
       {/* Input Wrapper */}
-      <div className="space-y-9">
+      <div className="relative space-y-9">
         {/* OTP */}
         <InputGroup
           type="string"
           id="otp"
-          name="otp"
           label="Enter the 6 digit pin"
-          maxLength={6}
-          errorMessage="Invalid pin number"
+          {...register("otp")}
+          errorMessage={errors.otp?.message}
         />
+        <div className="absolute top-0 right-0">
+          {resendCooldown > 0 ? (
+            <>Resend code in {resendCooldown}s</>
+          ) : (
+            <button
+              type="button"
+              className="hover:text-primary underline underline-offset-4"
+              onClick={handleResend}
+            >
+              Resend code
+            </button>
+          )}
+        </div>
       </div>
 
       {/* CTA Wrapper */}
       <div className="space-y-4">
-        <PrimaryButton text="Verify" />
+        <PrimaryButton type="submit" text="Verify" disabled={isSubmitting} />
+        <SecondaryButton type="button" text="Back" onClick={onBack} />
         <div className="flex items-center justify-between">
           <p>Have an account already?</p>
           <p>Sign In</p>

@@ -1,10 +1,43 @@
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+
 import InputGroup from "../../global/ui/InputGroup";
 import PasswordInputGroup from "../../global/ui/PasswordInputGroup";
 import PrimaryButton from "../../global/ui/PrimaryButton";
+import {
+  signUpStepSchema,
+  type TSignUpStep,
+} from "../../../lib/validations/sign-up";
+import SecondaryButton from "../../global/ui/SecondaryButton";
 
-const SignUpForm = () => {
+type SignUpFormProps = {
+  onBack: () => void;
+  onComplete: (
+    username: string,
+    password: string,
+    confirmPassword: string,
+  ) => void;
+};
+
+const SignUpForm: React.FC<SignUpFormProps> = ({ onComplete, onBack }) => {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<TSignUpStep>({
+    resolver: zodResolver(signUpStepSchema),
+  });
+
+  const onSubmit = (data: TSignUpStep) => {
+    // TODO: send final registration payload to backend
+    onComplete(data.username, data.password, data.confirmPassword);
+  };
+
   return (
-    <form className="flex grow flex-col justify-between">
+    <form
+      className="flex grow flex-col justify-between"
+      onSubmit={handleSubmit(onSubmit)}
+    >
       {/* Text Wrapper */}
       <div className="space-y-4">
         <h4 className="font-title text-[20px] text-neutral-100 uppercase">
@@ -22,31 +55,32 @@ const SignUpForm = () => {
         <InputGroup
           type="string"
           id="username"
-          name="username"
           label="Enter a username"
-          errorMessage="Invalid format"
+          {...register("username")}
+          errorMessage={errors.username?.message}
         />
 
         {/* Passwrd */}
         <PasswordInputGroup
           id="password"
-          name="password"
           label="Enter a password"
-          errorMessage="Invalid format"
+          {...register("password")}
+          errorMessage={errors.password?.message}
         />
 
         {/* Confirm Passwrd */}
         <PasswordInputGroup
           id="confirm-password"
-          name="confirm-password"
           label="Enter your password again"
-          errorMessage="Invalid format"
+          {...register("confirmPassword")}
+          errorMessage={errors.confirmPassword?.message}
         />
       </div>
 
       {/* CTA Wrapper */}
       <div className="space-y-4">
-        <PrimaryButton text="Sign Up" />
+        <PrimaryButton type="submit" text="Sign Up" disabled={isSubmitting} />
+        <SecondaryButton type="button" text="Back" onClick={onBack} />
         <div className="flex items-center justify-between">
           <p>Have an account already?</p>
           <p>Sign In</p>

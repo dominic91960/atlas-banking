@@ -10,7 +10,7 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({ text, ...props }) => {
   return (
     <button
       className={cn(
-        "bg-primary text-secondary w-full py-2 font-medium uppercase",
+        "bg-primary text-secondary transition-default w-full py-2 font-medium uppercase hover:opacity-80 disabled:pointer-events-none disabled:opacity-50",
         props.className,
       )}
       {...props}

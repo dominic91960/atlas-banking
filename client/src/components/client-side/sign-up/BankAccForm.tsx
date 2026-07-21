@@ -1,9 +1,33 @@
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+
 import InputGroup from "../../global/ui/InputGroup";
 import PrimaryButton from "../../global/ui/PrimaryButton";
+import { nicStepSchema, type TNicStep } from "../../../lib/validations/sign-up";
 
-const BankAccForm = () => {
+type BankAccFormProps = {
+  onComplete: (nic: string, bankAccNo: string) => void;
+};
+
+const BankAccForm: React.FC<BankAccFormProps> = ({ onComplete }) => {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<TNicStep>({
+    resolver: zodResolver(nicStepSchema),
+  });
+
+  const onSubmit = (data: TNicStep) => {
+    // TODO: verify NIC against backend — if found, backend sends OTP
+    onComplete(data.nic, data.bankAccNo);
+  };
+
   return (
-    <form className="flex grow flex-col justify-between">
+    <form
+      className="flex grow flex-col justify-between"
+      onSubmit={handleSubmit(onSubmit)}
+    >
       {/* Text Wrapper */}
       <div className="space-y-4">
         <h4 className="font-title text-[20px] text-neutral-100 uppercase">
@@ -17,20 +41,28 @@ const BankAccForm = () => {
 
       {/* Input Wrapper */}
       <div className="space-y-9">
+        {/* NIC */}
+        <InputGroup
+          type="text"
+          id="nic"
+          label="Enter your NIC Number"
+          {...register("nic")}
+          errorMessage={errors.nic?.message}
+        />
+
         {/* Bank Acc Number */}
         <InputGroup
-          type="string"
+          type="text"
           id="bank-acc-no"
-          name="bank-acc-no"
           label="Enter your Bank Account Number"
-          placeholder="XXXX XXXX XXXX XXXX"
-          errorMessage="Invalid account number format"
+          {...register("bankAccNo")}
+          errorMessage={errors.bankAccNo?.message}
         />
       </div>
 
       {/* CTA Wrapper */}
       <div className="space-y-4">
-        <PrimaryButton text="Proceed" />
+        <PrimaryButton type="submit" text="Proceed" disabled={isSubmitting} />
         <div className="flex items-center justify-between">
           <p>Have an account already?</p>
           <p>Sign In</p>

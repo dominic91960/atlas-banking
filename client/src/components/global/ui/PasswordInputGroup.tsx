@@ -52,7 +52,7 @@ const PasswordInputGroup: React.FC<PasswordInputGroupProps> = ({
       </div>
 
       {errorMessage && (
-        <p className="absolute bottom-0 left-0 text-neutral-600">
+        <p className="absolute bottom-0 left-0 text-neutral-600 animate-pulse">
           <span className="text-red-500">*</span> {errorMessage}
         </p>
       )}
