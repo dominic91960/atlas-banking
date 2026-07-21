@@ -8,6 +8,8 @@ import cors from "cors";
 import errorHandler from "./middleware/error-handler.js";
 import sequelize from "./utils/db.js";
 import { generalLimiter } from "./middleware/rate-limit.js";
+import helmet from "helmet";
+import authRoutes from "./routes/auth.routes.js";
 
 // MUST REMOVE: db test
 import Employee from "./models/employee.js";
@@ -17,6 +19,7 @@ const PORT = process.env.PORT!;
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN!;
 
 app.use(express.json());
+app.use(helmet());
 app.use(cors({ origin: CLIENT_ORIGIN }));
 app.use(generalLimiter);
 
@@ -36,6 +39,8 @@ app.get("/test", async (_, res, next) => {
     next(err);
   }
 });
+
+app.use("/api/auth", authRoutes);
 
 // 404 Route
 app.use((_req, res) => {
