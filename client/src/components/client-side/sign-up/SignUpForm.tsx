@@ -13,9 +13,14 @@ import SecondaryButton from "../../global/ui/SecondaryButton";
 type SignUpFormProps = {
   onBack: () => void;
   onComplete: (data: TSignUpStep) => void;
+  onSignUpComplete: () => void;
 };
 
-const SignUpForm: React.FC<SignUpFormProps> = ({ onComplete, onBack }) => {
+const SignUpForm: React.FC<SignUpFormProps> = ({
+  onComplete,
+  onBack,
+  onSignUpComplete,
+}) => {
   const {
     register,
     handleSubmit,
@@ -74,7 +79,7 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ onComplete, onBack }) => {
         <SecondaryButton type="button" text="Back" onClick={onBack} />
         <div className="flex items-center justify-between">
           <p>Have an account already?</p>
-          <p>Sign In</p>
+          <button onClick={onSignUpComplete}>Sign In</button>
         </div>
       </div>
     </form>

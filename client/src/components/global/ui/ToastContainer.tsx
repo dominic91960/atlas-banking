@@ -1,5 +1,5 @@
 import { cn } from "../../../lib/utils";
-import { useToastStore } from "../../../store/useToastStore";
+import { useToastStore } from "../../../store/toastStore";
 import Close from "../icons/Close";
 
 const ToastContainer = () => {

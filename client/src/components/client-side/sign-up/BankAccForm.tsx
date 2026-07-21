@@ -7,9 +7,13 @@ import { nicStepSchema, type TNicStep } from "../../../lib/validations/sign-up";
 
 type BankAccFormProps = {
   onComplete: (data: TNicStep) => void;
+  onSignUpComplete: () => void;
 };
 
-const BankAccForm: React.FC<BankAccFormProps> = ({ onComplete }) => {
+const BankAccForm: React.FC<BankAccFormProps> = ({
+  onComplete,
+  onSignUpComplete,
+}) => {
   const {
     register,
     handleSubmit,
@@ -60,7 +64,7 @@ const BankAccForm: React.FC<BankAccFormProps> = ({ onComplete }) => {
         <PrimaryButton type="submit" text="Proceed" disabled={isSubmitting} />
         <div className="flex items-center justify-between">
           <p>Have an account already?</p>
-          <p>Sign In</p>
+          <button onClick={onSignUpComplete}>Sign In</button>
         </div>
       </div>
     </form>

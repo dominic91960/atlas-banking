@@ -13,6 +13,7 @@ type OTPFormProps = {
   expiresIn: number;
   onBack: () => void;
   onOTPResend: () => void;
+  onSignUpComplete: () => void;
   onVerify: (data: TOtpStep) => void;
 };
 
@@ -21,6 +22,7 @@ const OTPForm: React.FC<OTPFormProps> = ({
   expiresIn,
   onBack,
   onOTPResend,
+  onSignUpComplete,
   onVerify,
 }) => {
   const [resendCooldown, setResendCooldown] = useState(expiresIn);
@@ -109,7 +111,7 @@ const OTPForm: React.FC<OTPFormProps> = ({
         <SecondaryButton type="button" text="Back" onClick={onBack} />
         <div className="flex items-center justify-between">
           <p>Have an account already?</p>
-          <p>Sign In</p>
+          <button onClick={onSignUpComplete}>Sign In</button>
         </div>
       </div>
     </form>

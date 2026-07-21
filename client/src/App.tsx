@@ -1,9 +1,17 @@
+import { useState } from "react";
+
 import Globe from "./components/global/icons/Globe";
 import Logo from "./components/global/icons/Logo";
 import PixelAnimation from "./components/client-side/PixelAnimation";
 import SignUpFlow from "./components/client-side/sign-up/SignUpFlow";
+import SignInForm from "./components/client-side/sign-in/SignInForm";
 
 const App = () => {
+  const [signUpComplete, setSignUpComplete] = useState(true);
+
+  const handleSignUpComplete = () => setSignUpComplete(true);
+  const handleCancelSignIn = () => setSignUpComplete(false);
+
   return (
     <main className="flex h-dvh p-8">
       {/* Container */}
@@ -20,7 +28,12 @@ const App = () => {
 
           {/* Form Area */}
           <div className="bg-secondary flex grow px-8 py-10">
-            <SignUpFlow />
+            {!signUpComplete && (
+              <SignUpFlow onSignUpComplete={handleSignUpComplete} />
+            )}
+            {signUpComplete && (
+              <SignInForm onCancelSignIn={handleCancelSignIn} />
+            )}
           </div>
 
           {/* Bottom Area */}
