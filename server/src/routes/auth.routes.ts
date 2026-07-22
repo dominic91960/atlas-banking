@@ -127,7 +127,7 @@ router.post(
  */
 router.post(
   "/forgot-password",
-  passwordResetRequestLimiter,
+  // passwordResetRequestLimiter,
 
   body("username")
     .trim()

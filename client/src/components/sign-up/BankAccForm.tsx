@@ -1,19 +1,16 @@
+import { Link } from "react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import InputGroup from "../../global/ui/InputGroup";
-import PrimaryButton from "../../global/ui/PrimaryButton";
-import { nicStepSchema, type TNicStep } from "../../../lib/validations/sign-up";
+import InputGroup from "../global/ui/InputGroup";
+import PrimaryButton from "../global/ui/PrimaryButton";
+import { nicStepSchema, type TNicStep } from "../../lib/validations/sign-up";
 
 type BankAccFormProps = {
   onComplete: (data: TNicStep) => void;
-  onSignUpComplete: () => void;
 };
 
-const BankAccForm: React.FC<BankAccFormProps> = ({
-  onComplete,
-  onSignUpComplete,
-}) => {
+const BankAccForm: React.FC<BankAccFormProps> = ({ onComplete }) => {
   const {
     register,
     handleSubmit,
@@ -64,7 +61,9 @@ const BankAccForm: React.FC<BankAccFormProps> = ({
         <PrimaryButton type="submit" text="Proceed" disabled={isSubmitting} />
         <div className="flex items-center justify-between">
           <p>Have an account already?</p>
-          <button onClick={onSignUpComplete}>Sign In</button>
+          <Link to="/sign-in" className="transition-default hover:text-primary">
+            Sign In
+          </Link>
         </div>
       </div>
     </form>

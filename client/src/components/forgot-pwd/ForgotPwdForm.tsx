@@ -1,23 +1,20 @@
 import { AxiosError } from "axios";
+import { Link } from "react-router";
 import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import { useToastStore } from "../../../store/toastStore";
-import { useAuthStore } from "../../../store/authStore";
+import { useToastStore } from "../../store/toastStore";
 import {
   forgotPwdFormSchema,
   type TForgotPwdForm,
-} from "../../../lib/validations/forgot-pwd";
-import api from "../../../lib/axios-instance";
-import InputGroup from "../../global/ui/InputGroup";
-import PrimaryButton from "../../global/ui/PrimaryButton";
+} from "../../lib/validations/forgot-pwd";
+import api from "../../lib/axios-instance";
+import InputGroup from "../global/ui/InputGroup";
+import PrimaryButton from "../global/ui/PrimaryButton";
+import SecondaryButton from "../global/ui/SecondaryButton";
 
 const ForgotPwdForm = () => {
   const { addToast } = useToastStore();
-  const { setAuth } = useAuthStore();
-  const navigate = useNavigate();
-
   const {
     register,
     handleSubmit,
@@ -28,16 +25,11 @@ const ForgotPwdForm = () => {
 
   const onSubmit = async (data: TForgotPwdForm) => {
     try {
-      const res = await api.post(
-        "/auth/login",
-        { ...data },
-        {
-          headers: { "Content-Type": "application/json" },
-        },
-      );
-      const accessToken = res.data.accessToken;
-      setAuth({ user: data.username, accessToken });
-      navigate("/dashboard", { replace: true });
+      await api.post("/auth/forgot-password", { ...data });
+      addToast({
+        message: "A reset link was sent to your email.",
+        type: "success",
+      });
     } catch (err) {
       let errMsg = "Something went wrong. Please try again.";
       if (err instanceof AxiosError) {
@@ -57,11 +49,10 @@ const ForgotPwdForm = () => {
       {/* Text Wrapper */}
       <div className="space-y-4">
         <h4 className="font-title text-[20px] text-neutral-100 uppercase">
-          Welcome Back
+          Forgot Your Password?
         </h4>
         <p className="min-[1920px]:text-[20px]">
-          Sign in to your online banking account to resume your digital journey
-          with Atlas.
+          No worries. We can send you a password reset link.
         </p>
       </div>
 
@@ -71,19 +62,40 @@ const ForgotPwdForm = () => {
         <InputGroup
           type="string"
           id="username"
-          label="Enter username"
+          label="Enter your Username"
           {...register("username")}
           errorMessage={errors.username?.message}
+        />
+
+        {/* Account Number */}
+        <InputGroup
+          type="string"
+          id="bank-acc-no"
+          label="Enter your Bank Account Number"
+          {...register("accountNumber")}
+          errorMessage={errors.accountNumber?.message}
+        />
+
+        {/* Email */}
+        <InputGroup
+          type="email"
+          id="email"
+          label="Enter your Email"
+          {...register("email")}
+          errorMessage={errors.email?.message}
         />
       </div>
 
       {/* CTA Wrapper */}
       <div className="space-y-4">
-        <PrimaryButton type="submit" text="Sign In" disabled={isSubmitting} />
-        <div className="flex items-center justify-between">
-          <p>Don't have an account?</p>
-          <button>Sign Up</button>
-        </div>
+        <PrimaryButton type="submit" text="Confirm" disabled={isSubmitting} />
+        <Link to="/sign-in">
+          <SecondaryButton
+            type="button"
+            text="Cancel"
+            disabled={isSubmitting}
+          />
+        </Link>
       </div>
     </form>
   );

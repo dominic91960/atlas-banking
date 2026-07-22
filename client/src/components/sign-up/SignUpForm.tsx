@@ -1,26 +1,22 @@
+import { Link } from "react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import InputGroup from "../../global/ui/InputGroup";
-import PasswordInputGroup from "../../global/ui/PasswordInputGroup";
-import PrimaryButton from "../../global/ui/PrimaryButton";
+import InputGroup from "../global/ui/InputGroup";
+import PasswordInputGroup from "../global/ui/PasswordInputGroup";
+import PrimaryButton from "../global/ui/PrimaryButton";
 import {
   signUpStepSchema,
   type TSignUpStep,
-} from "../../../lib/validations/sign-up";
-import SecondaryButton from "../../global/ui/SecondaryButton";
+} from "../../lib/validations/sign-up";
+import SecondaryButton from "../global/ui/SecondaryButton";
 
 type SignUpFormProps = {
   onBack: () => void;
   onComplete: (data: TSignUpStep) => void;
-  onSignUpComplete: () => void;
 };
 
-const SignUpForm: React.FC<SignUpFormProps> = ({
-  onComplete,
-  onBack,
-  onSignUpComplete,
-}) => {
+const SignUpForm: React.FC<SignUpFormProps> = ({ onComplete, onBack }) => {
   const {
     register,
     handleSubmit,
@@ -79,7 +75,9 @@ const SignUpForm: React.FC<SignUpFormProps> = ({
         <SecondaryButton type="button" text="Back" onClick={onBack} />
         <div className="flex items-center justify-between">
           <p>Have an account already?</p>
-          <button onClick={onSignUpComplete}>Sign In</button>
+          <Link to="/sign-in" className="transition-default hover:text-primary">
+            Sign In
+          </Link>
         </div>
       </div>
     </form>

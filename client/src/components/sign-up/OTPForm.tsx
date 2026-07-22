@@ -1,19 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 
+import { Link } from "react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import InputGroup from "../../global/ui/InputGroup";
-import PrimaryButton from "../../global/ui/PrimaryButton";
-import SecondaryButton from "../../global/ui/SecondaryButton";
-import { otpStepSchema, type TOtpStep } from "../../../lib/validations/sign-up";
+import InputGroup from "../global/ui/InputGroup";
+import PrimaryButton from "../global/ui/PrimaryButton";
+import SecondaryButton from "../global/ui/SecondaryButton";
+import { otpStepSchema, type TOtpStep } from "../../lib/validations/sign-up";
 
 type OTPFormProps = {
   email: string;
   expiresIn: number;
   onBack: () => void;
   onOTPResend: () => void;
-  onSignUpComplete: () => void;
   onVerify: (data: TOtpStep) => void;
 };
 
@@ -22,7 +22,6 @@ const OTPForm: React.FC<OTPFormProps> = ({
   expiresIn,
   onBack,
   onOTPResend,
-  onSignUpComplete,
   onVerify,
 }) => {
   const [resendCooldown, setResendCooldown] = useState(expiresIn);
@@ -111,7 +110,9 @@ const OTPForm: React.FC<OTPFormProps> = ({
         <SecondaryButton type="button" text="Back" onClick={onBack} />
         <div className="flex items-center justify-between">
           <p>Have an account already?</p>
-          <button onClick={onSignUpComplete}>Sign In</button>
+          <Link to="/sign-in" className="transition-default hover:text-primary">
+            Sign In
+          </Link>
         </div>
       </div>
     </form>

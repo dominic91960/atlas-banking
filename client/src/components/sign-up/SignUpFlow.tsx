@@ -1,9 +1,10 @@
 import { useRef, useState } from "react";
 
+import { useNavigate } from "react-router";
 import { AxiosError } from "axios";
 
-import { useToastStore } from "../../../store/toastStore";
-import api from "../../../lib/axios-instance";
+import { useToastStore } from "../../store/toastStore";
+import api from "../../lib/axios-instance";
 import BankAccForm from "./BankAccForm";
 import OTPForm from "./OTPForm";
 import SignUpForm from "./SignUpForm";
@@ -11,14 +12,11 @@ import type {
   TNicStep,
   TOtpStep,
   TSignUpStep,
-} from "../../../lib/validations/sign-up";
+} from "../../lib/validations/sign-up";
 
-type SignUpFlowProps = {
-  onClickSignIn: () => void;
-};
-
-const SignUpFlow: React.FC<SignUpFlowProps> = ({ onClickSignIn }) => {
+const SignUpFlow = () => {
   const { addToast } = useToastStore();
+  const navigate = useNavigate();
   const nicDataRef = useRef<TNicStep>({ nic: "", accountNumber: "" });
   const [email, setEmail] = useState("");
   const [expiresIn, setExpiresIn] = useState(0);
@@ -84,7 +82,8 @@ const SignUpFlow: React.FC<SignUpFlowProps> = ({ onClickSignIn }) => {
         username: data.username,
         password: data.password,
       });
-      onClickSignIn();
+      navigate("/sign-in");
+      return;
     } catch (err) {
       let errMsg = "Something went wrong. Please try again.";
       if (err instanceof AxiosError) {
@@ -98,19 +97,14 @@ const SignUpFlow: React.FC<SignUpFlowProps> = ({ onClickSignIn }) => {
 
   return (
     <>
-      {step == 1 && (
-        <BankAccForm
-          onComplete={handleNICComplete}
-          onSignUpComplete={onClickSignIn}
-        />
-      )}
+      {step == 1 && <BankAccForm onComplete={handleNICComplete} />}
       {step == 2 && (
         <OTPForm
           email={email}
           expiresIn={expiresIn}
           onBack={() => setStep(1)}
           onOTPResend={handleOtpResend}
-          onSignUpComplete={onClickSignIn}
+
           onVerify={handleOtpVerify}
         />
       )}
@@ -118,7 +112,6 @@ const SignUpFlow: React.FC<SignUpFlowProps> = ({ onClickSignIn }) => {
         <SignUpForm
           onBack={() => setStep(2)}
           onComplete={handlePasswordComplete}
-          onSignUpComplete={onClickSignIn}
         />
       )}
     </>

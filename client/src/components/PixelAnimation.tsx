@@ -1,4 +1,4 @@
-import PixelBlast from "../global/ui/PixelBlast";
+import PixelBlast from "./global/ui/PixelBlast";
 
 const PixelAnimation = () => {
   return (

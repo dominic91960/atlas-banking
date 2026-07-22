@@ -1,24 +1,20 @@
 import { AxiosError } from "axios";
 import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import { useToastStore } from "../../../store/toastStore";
-import InputGroup from "../../global/ui/InputGroup";
-import PasswordInputGroup from "../../global/ui/PasswordInputGroup";
-import PrimaryButton from "../../global/ui/PrimaryButton";
-import api from "../../../lib/axios-instance";
+import { useAuthStore } from "../../store/authStore";
+import { useToastStore } from "../../store/toastStore";
+import InputGroup from "../global/ui/InputGroup";
+import PasswordInputGroup from "../global/ui/PasswordInputGroup";
+import PrimaryButton from "../global/ui/PrimaryButton";
+import api from "../../lib/axios-instance";
 import {
   signInFormSchema,
   type TSignInForm,
-} from "../../../lib/validations/sign-in";
-import { useAuthStore } from "../../../store/authStore";
+} from "../../lib/validations/sign-in";
 
-type SignInFormProps = {
-  onClickSignUp: () => void;
-};
-
-const SignInForm: React.FC<SignInFormProps> = ({ onClickSignUp }) => {
+const SignInForm = () => {
   const { addToast } = useToastStore();
   const { setAuth } = useAuthStore();
   const navigate = useNavigate();
@@ -82,12 +78,20 @@ const SignInForm: React.FC<SignInFormProps> = ({ onClickSignUp }) => {
         />
 
         {/* Passwrd */}
-        <PasswordInputGroup
-          id="password"
-          label="Enter password"
-          {...register("password")}
-          errorMessage={errors.password?.message}
-        />
+        <div className="relative">
+          <PasswordInputGroup
+            id="password"
+            label="Enter password"
+            {...register("password")}
+            errorMessage={errors.password?.message}
+          />
+
+          <div className="absolute top-0 right-0">
+            <Link to="/forgot-password" className="hover:text-primary">
+              Forgot Password?
+            </Link>
+          </div>
+        </div>
       </div>
 
       {/* CTA Wrapper */}
@@ -95,7 +99,9 @@ const SignInForm: React.FC<SignInFormProps> = ({ onClickSignUp }) => {
         <PrimaryButton type="submit" text="Sign In" disabled={isSubmitting} />
         <div className="flex items-center justify-between">
           <p>Don't have an account?</p>
-          <button onClick={onClickSignUp}>Sign Up</button>
+          <Link to="/sign-up" className="transition-default hover:text-primary">
+            Sign Up
+          </Link>
         </div>
       </div>
     </form>
