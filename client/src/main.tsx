@@ -8,6 +8,8 @@ import App from "./App.tsx";
 import Dashboard from "./components/dashboard/Dashboard.tsx";
 import DashboardLayout from "./layouts/DashboardLayout.tsx";
 import ForgotPwdForm from "./components/forgot-pwd/ForgotPwdForm.tsx";
+import PersistLogin from "./components/global/PersistLogin.tsx";
+import RequireAuth from "./components/global/RequireAuth.tsx";
 import ResetPwdForm from "./components/reset-pwd/ResetPwdForm.tsx";
 import SignUpFlow from "./components/sign-up/SignUpFlow.tsx";
 import SignInForm from "./components/sign-in/SignInForm.tsx";
@@ -39,22 +41,32 @@ const router = createBrowserRouter([
     ],
   },
   {
-    path: "/dashboard",
-    Component: DashboardLayout,
+    Component: PersistLogin,
     children: [
       {
-        index: true,
-        Component: Dashboard,
-      },
-    ],
-  },
-  {
-    path: "/transactions",
-    Component: DashboardLayout,
-    children: [
-      {
-        index: true,
-        Component: Transactions,
+        Component: RequireAuth,
+        children: [
+          {
+            path: "/dashboard",
+            Component: DashboardLayout,
+            children: [
+              {
+                index: true,
+                Component: Dashboard,
+              },
+            ],
+          },
+          {
+            path: "/transactions",
+            Component: DashboardLayout,
+            children: [
+              {
+                index: true,
+                Component: Transactions,
+              },
+            ],
+          },
+        ],
       },
     ],
   },

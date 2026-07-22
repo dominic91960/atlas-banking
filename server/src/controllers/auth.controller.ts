@@ -525,6 +525,113 @@ export const login = async (
   }
 };
 
+/**
+ * Refresh:
+ * Read the httpOnly refresh-token cookie and issue a new access token.
+ */
+export const refreshAccessToken = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const refreshToken = req.cookies?.refreshToken;
+
+    if (!refreshToken) {
+      return res.status(401).json({
+        message: "Authentication is required",
+      });
+    }
+
+    const refreshTokenSecret =
+      process.env.REFRESH_TOKEN_SECRET;
+    const jwtSecret = process.env.JWT_SECRET;
+
+    if (!refreshTokenSecret || !jwtSecret) {
+      throw new Error(
+        "Token secrets are not configured"
+      );
+    }
+
+    let payload: jwt.JwtPayload;
+
+    try {
+      const decoded = jwt.verify(
+        refreshToken,
+        refreshTokenSecret,
+        {
+          algorithms: ["HS256"],
+          issuer: "atlas-banking-api",
+          audience: "atlas-banking-client",
+        }
+      );
+
+      if (typeof decoded === "string") {
+        return res.status(401).json({
+          message: "The refresh token is invalid",
+        });
+      }
+
+      payload = decoded;
+    } catch {
+      return res.status(401).json({
+        message:
+          "The refresh token is invalid or has expired",
+      });
+    }
+
+    /*
+     * Verify the user still exists before issuing
+     * a new access token.
+     */
+    const user = await User.findOne({
+      where: {
+        id: payload.sub,
+      },
+    });
+
+    if (!user) {
+      return res.status(401).json({
+        message: "The user account no longer exists",
+      });
+    }
+
+    const userId = String(user.getDataValue("id"));
+    const accountNumber = String(
+      user.getDataValue("account_number")
+    );
+    const username = String(
+      user.getDataValue("username")
+    );
+
+    const accessToken = jwt.sign(
+      {
+        sub: userId,
+        accountNumber,
+        username,
+      },
+      jwtSecret,
+      {
+        algorithm: "HS256",
+        expiresIn: "15m",
+        issuer: "atlas-banking-api",
+        audience: "atlas-banking-client",
+      }
+    );
+
+    return res.status(200).json({
+      accessToken,
+      user: {
+        id: userId,
+        accountNumber,
+        username,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const maskEmail = (email: string): string => {
   const [localPart, domain] = email.split("@");
 

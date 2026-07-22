@@ -5,6 +5,7 @@ import {
   verifyRegistrationOTP,
   completeRegistration,
   login,
+  refreshAccessToken,
   requestPasswordReset,
   resetPassword,
 } from "../controllers/auth.controller.js";
@@ -120,6 +121,11 @@ router.post(
   validateRequest,
   login
 );
+
+/*
+ * Refresh the access token using the httpOnly refresh-token cookie.
+ */
+router.get("/refresh", refreshAccessToken);
 
 /*
  * Password reset step 1:

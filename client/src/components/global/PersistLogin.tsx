@@ -1,0 +1,60 @@
+import { useEffect, useState } from "react";
+import { Outlet } from "react-router";
+
+import { useAuthStore } from "../../store/authStore";
+import api from "../../lib/axios-instance";
+
+const PersistLogin = () => {
+  const { auth, persist, setAuth } = useAuthStore();
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const refreshSession = async () => {
+      try {
+        const res = await api.get("/auth/refresh", {
+          withCredentials: true,
+        });
+
+        if (isMounted) {
+          setAuth({
+            accessToken: res.data.accessToken,
+            user: res.data.user,
+          });
+        }
+      } catch {
+        /*
+         * Refresh failed — the user will be redirected
+         * to sign-in by the RequireAuth guard.
+         */
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    if (!auth.accessToken && persist) {
+      refreshSession();
+    } else {
+      setIsLoading(false);
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  if (!persist) {
+    return <Outlet />;
+  }
+
+  if (isLoading) {
+    return null;
+  }
+
+  return <Outlet />;
+};
+
+export default PersistLogin;
