@@ -9,8 +9,8 @@ const DashboardLayout = () => {
   return (
     <main className="flex h-dvh p-8">
       {/* Container */}
-      <div className="flex grow gap-px bg-neutral-700 p-px">
-        <div className="bg-secondary w-75.75 p-8">
+      <div className="flex min-h-0 grow gap-px bg-neutral-700 p-px">
+        <div className="bg-secondary w-70 p-8">
           <div className="space-y-16">
             <Logo className="w-full" />
 
