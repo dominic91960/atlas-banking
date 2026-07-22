@@ -104,7 +104,7 @@ const CreditTransferForm = () => {
   };
 
   return (
-    <div className="bg-secondary flex min-h-0 grow flex-col p-8">
+    <div className="bg-secondary flex min-h-0 max-w-115 grow flex-col p-8">
       {step === 1 && <TransferDetailsForm onComplete={handleTransferStart} />}
 
       {step === 2 && transferMeta && (

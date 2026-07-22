@@ -39,6 +39,7 @@ const SignInForm = () => {
       );
       const { accessToken, user } = res.data;
       setAuth({ user, accessToken });
+      addToast({ message: "Sign In Successful", type: "success" });
       navigate("/dashboard", { replace: true });
     } catch (err) {
       let errMsg = "Something went wrong. Please try again.";
