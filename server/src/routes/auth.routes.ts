@@ -8,6 +8,7 @@ import {
   refreshAccessToken,
   requestPasswordReset,
   resetPassword,
+  logout,
 } from "../controllers/auth.controller.js";
 import validateRequest from "../middleware/validate-request.js";
 import {
@@ -126,6 +127,11 @@ router.post(
  * Refresh the access token using the httpOnly refresh-token cookie.
  */
 router.get("/refresh", refreshAccessToken);
+
+/*
+ * Sign out.
+ */
+router.post("/logout", logout);
 
 /*
  * Password reset step 1:
