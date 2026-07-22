@@ -10,6 +10,7 @@ import sequelize from "./utils/db.js";
 import { generalLimiter } from "./middleware/rate-limit.js";
 import helmet from "helmet";
 import authRoutes from "./routes/auth.routes.js";
+import transactionRoutes from "./routes/transaction.routes.js";
 
 // MUST REMOVE: db test
 import Employee from "./models/employee.js";
@@ -20,8 +21,31 @@ const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN!;
 
 app.use(express.json());
 app.use(helmet());
-app.use(cors({ origin: CLIENT_ORIGIN }));
+app.use(
+  cors({
+    origin: CLIENT_ORIGIN,
+    methods: [
+      "GET",
+      "POST",
+      "PUT",
+      "PATCH",
+      "DELETE",
+    ],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+    ],
+  })
+);
 app.use(generalLimiter);
+app.use("/api/auth", authRoutes);
+app.use("/api/transactions", transactionRoutes);
+
+app.use(
+  express.json({
+    limit: "20kb",
+  })
+);
 
 // Root GET Route
 app.get("/", (_: Request, res: Response) => {

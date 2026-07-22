@@ -191,3 +191,118 @@ If you did not request this password reset, you can ignore this email.
     `.trim(),
   });
 };
+
+
+export const sendTransactionOTP = async (
+  recipientEmail: string,
+  otpCode: string,
+  receiverAccountNumber: string,
+  amount: string
+): Promise<void> => {
+  const maskedReceiver =
+    maskAccountNumber(receiverAccountNumber);
+
+  await brevoClient.transactionalEmails.sendTransacEmail({
+    sender: {
+      email: senderEmail,
+      name: senderName,
+    },
+
+    to: [
+      {
+        email: recipientEmail,
+      },
+    ],
+
+    subject: "Atlas Banking transaction verification code",
+
+    htmlContent: `
+      <!DOCTYPE html>
+      <html lang="en">
+        <head>
+          <meta charset="UTF-8" />
+        </head>
+
+        <body style="
+          font-family: Arial, sans-serif;
+          background-color: #f4f6f8;
+          padding: 30px;
+        ">
+          <div style="
+            max-width: 550px;
+            margin: auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+          ">
+            <h2>Atlas Banking</h2>
+
+            <p>
+              We received a request to transfer
+              <strong>${escapeHTML(amount)}</strong>
+              to account
+              <strong>${escapeHTML(maskedReceiver)}</strong>.
+            </p>
+
+            <p>Your transaction verification code is:</p>
+
+            <div style="
+              font-size: 32px;
+              font-weight: bold;
+              letter-spacing: 8px;
+              margin: 24px 0;
+            ">
+              ${escapeHTML(otpCode)}
+            </div>
+
+            <p>This code expires in five minutes.</p>
+
+            <p>
+              Do not share this code with anyone.
+              Atlas Banking staff will never request it.
+            </p>
+
+            <p>
+              If you did not start this transaction,
+              do not use the code and contact the bank.
+            </p>
+          </div>
+        </body>
+      </html>
+    `,
+
+    textContent: `
+Atlas Banking Transaction Verification
+
+A transfer of ${amount} was requested to account ${maskedReceiver}.
+
+Verification code: ${otpCode}
+
+This code expires in five minutes.
+
+Do not share this code with anyone.
+    `.trim(),
+  });
+};
+
+const maskAccountNumber = (
+  accountNumber: string
+): string => {
+  if (accountNumber.length <= 4) {
+    return "*".repeat(accountNumber.length);
+  }
+
+  return (
+    "*".repeat(accountNumber.length - 4) +
+    accountNumber.slice(-4)
+  );
+};
+
+const escapeHTML = (value: string): string => {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+};
