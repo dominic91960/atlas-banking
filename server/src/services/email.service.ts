@@ -90,3 +90,104 @@ export const sendRegistrationOTP = async (
     `,
   });
 };
+
+export const sendPasswordResetEmail = async (
+  recipientEmail: string,
+  resetLink: string,
+  expiryMinutes: number
+): Promise<void> => {
+  await brevoClient.transactionalEmails.sendTransacEmail({
+    sender: {
+      email: senderEmail,
+      name: senderName,
+    },
+
+    to: [
+      {
+        email: recipientEmail,
+      },
+    ],
+
+    subject: "Reset your Atlas Banking password",
+
+    htmlContent: `
+      <!DOCTYPE html>
+      <html lang="en">
+        <head>
+          <meta charset="UTF-8" />
+        </head>
+
+        <body style="
+          font-family: Arial, sans-serif;
+          background-color: #f4f6f8;
+          padding: 30px;
+        ">
+          <div style="
+            max-width: 550px;
+            margin: auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+          ">
+            <h2>Atlas Banking</h2>
+
+            <p>
+              We received a request to reset the password for your
+              online banking account.
+            </p>
+
+            <p>
+              Click the button below to create a new password.
+            </p>
+
+            <p style="margin: 30px 0;">
+              <a
+                href="${resetLink}"
+                style="
+                  background-color: #1d4ed8;
+                  color: white;
+                  padding: 12px 20px;
+                  text-decoration: none;
+                  border-radius: 6px;
+                  display: inline-block;
+                "
+              >
+                Reset Password
+              </a>
+            </p>
+
+            <p>
+              This password-reset link expires in
+              ${expiryMinutes} minutes and can only be used once.
+            </p>
+
+            <p>
+              Do not share this link with anyone. Atlas Banking staff
+              will never ask you for your password-reset link.
+            </p>
+
+            <p>
+              If you did not request a password reset, you can safely
+              ignore this email. Your existing password will remain
+              unchanged.
+            </p>
+          </div>
+        </body>
+      </html>
+    `,
+
+    textContent: `
+Atlas Banking Password Reset
+
+We received a request to reset your online banking password.
+
+Open the following link to create a new password:
+
+${resetLink}
+
+This link expires in ${expiryMinutes} minutes and can only be used once.
+
+If you did not request this password reset, you can ignore this email.
+    `.trim(),
+  });
+};
