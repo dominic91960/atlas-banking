@@ -43,9 +43,33 @@ const loginLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+const passwordResetRequestLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 5,
+  message: {
+    message:
+      "Too many password-reset requests. Please try again later.",
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const passwordResetLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  message: {
+    message:
+      "Too many password-reset attempts. Please try again later.",
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 export {
   generalLimiter,
   registrationStartLimiter,
   otpVerificationLimiter,
   loginLimiter,
+  passwordResetRequestLimiter,
+  passwordResetLimiter,
 };

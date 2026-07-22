@@ -5,16 +5,32 @@ import {
 } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { randomInt } from "node:crypto";
+import {
+  randomInt,
+  randomBytes,
+  createHash,
+} from "node:crypto";
 import sequelize from "../utils/db.js";
 import CustomerAccount from "../models/customer-account.js";
 import User from "../models/user.js";
 import OTP from "../models/otp.js";
-import { sendRegistrationOTP } from "../services/email.service.js";
+import {
+  sendRegistrationOTP,
+  sendPasswordResetEmail,
+} from "../services/email.service.js";
+import PasswordReset from "../models/password-reset.js";
+
 
 const OTP_EXPIRY_MINUTES = 5;
 const MAX_OTP_ATTEMPTS = 5;
 const PASSWORD_SALT_ROUNDS = 12;
+
+const DEFAULT_PASSWORD_RESET_EXPIRY_MINUTES = 15;
+
+const PASSWORD_RESET_EXPIRY_MINUTES = Number(
+  process.env.PASSWORD_RESET_EXPIRY_MINUTES ??
+    DEFAULT_PASSWORD_RESET_EXPIRY_MINUTES
+);
 
 const normalizeAccountNumber = (value: unknown): string => {
   return String(value ?? "").trim();
@@ -26,6 +42,16 @@ const normalizeNIC = (value: unknown): string => {
 
 const normalizeUsername = (value: unknown): string => {
   return String(value ?? "").trim().toLowerCase();
+};
+
+const normalizeEmail = (value: unknown): string => {
+  return String(value ?? "").trim().toLowerCase();
+};
+
+const hashResetToken = (token: string): string => {
+  return createHash("sha256")
+    .update(token)
+    .digest("hex");
 };
 
 /**
@@ -465,4 +491,270 @@ const maskEmail = (email: string): string => {
   );
 
   return `${visibleCharacters}${hiddenCharacters}@${domain}`;
+};
+
+/**
+ * Password reset step 1:
+ * Validate the customer's username, account number and email,
+ * then email a single-use password-reset link.
+ */
+export const requestPasswordReset = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  /*
+   * Always return the same response when the supplied information
+   * does not match. This helps prevent account enumeration.
+   */
+  const genericResponse = {
+    message:
+      "If the provided details match an account, a password-reset link will be sent to the registered email address",
+  };
+
+  try {
+    const username = normalizeUsername(req.body.username);
+    const accountNumber = normalizeAccountNumber(
+      req.body.accountNumber
+    );
+    const email = normalizeEmail(req.body.email);
+
+    const user = await User.findOne({
+      where: {
+        username,
+        account_number: accountNumber,
+      },
+    });
+
+    if (!user) {
+      return res.status(200).json(genericResponse);
+    }
+
+    const customer = await CustomerAccount.findOne({
+      where: {
+        account_number: accountNumber,
+      },
+    });
+
+    if (!customer) {
+      return res.status(200).json(genericResponse);
+    }
+
+    const registeredEmail = normalizeEmail(
+      customer.getDataValue("email")
+    );
+
+    if (registeredEmail !== email) {
+      return res.status(200).json(genericResponse);
+    }
+
+    const passwordResetURL =
+      process.env.PASSWORD_RESET_URL;
+
+    if (!passwordResetURL) {
+      throw new Error(
+        "PASSWORD_RESET_URL is not configured"
+      );
+    }
+
+    /*
+     * Generate 32 random bytes and encode them as hexadecimal.
+     * This creates a 64-character, high-entropy reset token.
+     */
+    const resetToken = randomBytes(32).toString("hex");
+    const tokenHash = hashResetToken(resetToken);
+
+    const expiresAt = new Date(
+      Date.now() +
+        PASSWORD_RESET_EXPIRY_MINUTES * 60 * 1000
+    );
+
+    /*
+     * Upsert ensures that only the newest reset link remains active
+     * for this account.
+     */
+    await PasswordReset.upsert({
+      account_number: accountNumber,
+      token_hash: tokenHash,
+      expires_at: expiresAt,
+      created_at: new Date(),
+    });
+
+    const resetLink =
+      `${passwordResetURL}?token=` +
+      encodeURIComponent(resetToken);
+
+    try {
+      await sendPasswordResetEmail(
+        registeredEmail,
+        resetLink,
+        PASSWORD_RESET_EXPIRY_MINUTES
+      );
+    } catch (emailError) {
+      /*
+       * Delete the token when email delivery fails so an inaccessible
+       * reset request is not left active.
+       */
+      await PasswordReset.destroy({
+        where: {
+          account_number: accountNumber,
+          token_hash: tokenHash,
+        },
+      });
+
+      throw emailError;
+    }
+
+    return res.status(200).json(genericResponse);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Password reset step 2:
+ * Validate the reset token and replace the current password.
+ */
+export const resetPassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const transaction = await sequelize.transaction();
+
+  try {
+    const resetToken = String(
+      req.body.token ?? ""
+    ).trim();
+
+    const newPassword = String(
+      req.body.password ?? ""
+    );
+
+    const tokenHash = hashResetToken(resetToken);
+
+    const resetRecord = await PasswordReset.findOne({
+      where: {
+        token_hash: tokenHash,
+      },
+      transaction,
+      lock: transaction.LOCK.UPDATE,
+    });
+
+    if (!resetRecord) {
+      await transaction.rollback();
+
+      return res.status(400).json({
+        message:
+          "The password-reset link is invalid or has already been used",
+      });
+    }
+
+    const expiresAt = new Date(
+      resetRecord.getDataValue("expires_at") as
+        | string
+        | Date
+    );
+
+    if (expiresAt.getTime() <= Date.now()) {
+      await PasswordReset.destroy({
+        where: {
+          token_hash: tokenHash,
+        },
+        transaction,
+      });
+
+      await transaction.commit();
+
+      return res.status(400).json({
+        message:
+          "The password-reset link has expired. Request a new link.",
+      });
+    }
+
+    const accountNumber = String(
+      resetRecord.getDataValue("account_number")
+    );
+
+    const user = await User.findOne({
+      where: {
+        account_number: accountNumber,
+      },
+      transaction,
+      lock: transaction.LOCK.UPDATE,
+    });
+
+    if (!user) {
+      await PasswordReset.destroy({
+        where: {
+          token_hash: tokenHash,
+        },
+        transaction,
+      });
+
+      await transaction.commit();
+
+      return res.status(400).json({
+        message: "The password-reset request is invalid",
+      });
+    }
+
+    const currentPasswordHash = String(
+      user.getDataValue("password_hash")
+    );
+
+    /*
+     * Optional but useful:
+     * Prevent the customer from resetting the password to exactly
+     * the same password currently in use.
+     */
+    const sameAsCurrentPassword = await bcrypt.compare(
+      newPassword,
+      currentPasswordHash
+    );
+
+    if (sameAsCurrentPassword) {
+      await transaction.rollback();
+
+      return res.status(400).json({
+        message:
+          "The new password must be different from the current password",
+      });
+    }
+
+    const newPasswordHash = await bcrypt.hash(
+      newPassword,
+      PASSWORD_SALT_ROUNDS
+    );
+
+    await user.update(
+      {
+        password_hash: newPasswordHash,
+      },
+      {
+        transaction,
+      }
+    );
+
+    /*
+     * Delete the reset request after successful use.
+     * The link can therefore only be used once.
+     */
+    await PasswordReset.destroy({
+      where: {
+        account_number: accountNumber,
+      },
+      transaction,
+    });
+
+    await transaction.commit();
+
+    return res.status(200).json({
+      message:
+        "Your password has been reset successfully. You can now sign in with your new password.",
+    });
+  } catch (error) {
+    await transaction.rollback();
+    next(error);
+  }
 };
