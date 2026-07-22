@@ -16,7 +16,7 @@ import {
 
 const SignInForm = () => {
   const { addToast } = useToastStore();
-  const { setAuth } = useAuthStore();
+  const { setAuth, persist, setPersist } = useAuthStore();
   const navigate = useNavigate();
 
   const {
@@ -97,9 +97,27 @@ const SignInForm = () => {
 
       {/* CTA Wrapper */}
       <div className="space-y-4">
+        {/* Remember Me */}
+        <div className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            id="persist"
+            className="accent-primary h-4 w-4 cursor-pointer opacity-10 checked:opacity-100"
+            checked={persist}
+            onChange={(e) => setPersist(e.target.checked)}
+          />
+          <label
+            htmlFor="persist"
+            className="cursor-pointer leading-[1em] select-none"
+          >
+            Remember my credentials
+          </label>
+        </div>
+
         <PrimaryButton type="submit" disabled={isSubmitting}>
           Sign In
         </PrimaryButton>
+
         <div className="flex items-center justify-between">
           <p>Don't have an account?</p>
           <Link to="/sign-up" className="transition-default hover:text-primary">
