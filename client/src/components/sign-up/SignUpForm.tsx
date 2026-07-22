@@ -71,7 +71,9 @@ const SignUpForm: React.FC<SignUpFormProps> = ({ onComplete, onBack }) => {
 
       {/* CTA Wrapper */}
       <div className="space-y-4">
-        <PrimaryButton type="submit" text="Sign Up" disabled={isSubmitting} />
+        <PrimaryButton type="submit" disabled={isSubmitting}>
+          Sign Up
+        </PrimaryButton>
         <SecondaryButton type="button" text="Back" onClick={onBack} />
         <div className="flex items-center justify-between">
           <p>Have an account already?</p>

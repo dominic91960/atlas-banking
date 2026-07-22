@@ -6,6 +6,7 @@ import { RouterProvider } from "react-router/dom";
 
 import App from "./App.tsx";
 import Dashboard from "./components/dashboard/Dashboard.tsx";
+import DashboardLayout from "./layouts/DashboardLayout.tsx";
 import ForgotPwdForm from "./components/forgot-pwd/ForgotPwdForm.tsx";
 import ResetPwdForm from "./components/reset-pwd/ResetPwdForm.tsx";
 import SignUpFlow from "./components/sign-up/SignUpFlow.tsx";
@@ -38,7 +39,13 @@ const router = createBrowserRouter([
   },
   {
     path: "/dashboard",
-    Component: Dashboard,
+    Component: DashboardLayout,
+    children: [
+      {
+        index: true,
+        Component: Dashboard,
+      },
+    ],
   },
 ]);
 

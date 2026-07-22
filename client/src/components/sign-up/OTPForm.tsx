@@ -106,7 +106,9 @@ const OTPForm: React.FC<OTPFormProps> = ({
 
       {/* CTA Wrapper */}
       <div className="space-y-4">
-        <PrimaryButton type="submit" text="Verify" disabled={isSubmitting} />
+        <PrimaryButton type="submit" disabled={isSubmitting}>
+          Verify
+        </PrimaryButton>
         <SecondaryButton type="button" text="Back" onClick={onBack} />
         <div className="flex items-center justify-between">
           <p>Have an account already?</p>

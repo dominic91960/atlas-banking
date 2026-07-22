@@ -88,7 +88,9 @@ const ForgotPwdForm = () => {
 
       {/* CTA Wrapper */}
       <div className="space-y-4">
-        <PrimaryButton type="submit" text="Confirm" disabled={isSubmitting} />
+        <PrimaryButton type="submit" disabled={isSubmitting}>
+          Confirm
+        </PrimaryButton>
         <Link to="/sign-in">
           <SecondaryButton
             type="button"

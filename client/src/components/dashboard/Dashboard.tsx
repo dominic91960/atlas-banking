@@ -1,10 +1,5 @@
 const Dashboard = () => {
-  return (
-    <main className="flex h-dvh p-8">
-      {/* Container */}
-      <div className="flex grow gap-px bg-neutral-700 p-px">Dashboard</div>
-    </main>
-  );
+  return <div className="flex grow bg-secondary">Dashboard</div>;
 };
 
 export default Dashboard;

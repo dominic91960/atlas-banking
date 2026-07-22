@@ -58,7 +58,9 @@ const BankAccForm: React.FC<BankAccFormProps> = ({ onComplete }) => {
 
       {/* CTA Wrapper */}
       <div className="space-y-4">
-        <PrimaryButton type="submit" text="Proceed" disabled={isSubmitting} />
+        <PrimaryButton type="submit" disabled={isSubmitting}>
+          Proceed
+        </PrimaryButton>
         <div className="flex items-center justify-between">
           <p>Have an account already?</p>
           <Link to="/sign-in" className="transition-default hover:text-primary">
