@@ -65,6 +65,33 @@ const passwordResetLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+const transactionStartLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+
+  message: {
+    message:
+      "Too many transaction requests. Please try again later.",
+  },
+
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const transactionVerificationLimiter =
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 10,
+
+    message: {
+      message:
+        "Too many transaction verification attempts. Please try again later.",
+    },
+
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+
 export {
   generalLimiter,
   registrationStartLimiter,
@@ -72,4 +99,6 @@ export {
   loginLimiter,
   passwordResetRequestLimiter,
   passwordResetLimiter,
+  transactionStartLimiter,
+  transactionVerificationLimiter,
 };
