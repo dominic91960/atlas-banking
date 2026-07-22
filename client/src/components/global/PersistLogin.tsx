@@ -3,6 +3,7 @@ import { Outlet } from "react-router";
 
 import { useAuthStore } from "../../store/authStore";
 import api from "../../lib/axios-instance";
+import Logo from "./icons/Logo";
 
 const PersistLogin = () => {
   const { auth, persist, setAuth } = useAuthStore();
@@ -51,7 +52,11 @@ const PersistLogin = () => {
   }
 
   if (isLoading) {
-    return null;
+    return (
+      <div className="bg-secondary fixed inset-0 z-50 flex items-center justify-center">
+        <Logo className="w-45 animate-pulse" />
+      </div>
+    );
   }
 
   return <Outlet />;
