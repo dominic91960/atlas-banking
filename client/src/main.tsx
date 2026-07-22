@@ -16,12 +16,17 @@ import SignInForm from "./components/sign-in/SignInForm.tsx";
 import ToastContainer from "./components/global/ui/ToastContainer.tsx";
 import Transactions from "./components/transactions/Transactions.tsx";
 import "./index.css";
+import Home from "./components/home/Home.tsx";
 
 const router = createBrowserRouter([
   {
     path: "/",
     Component: App,
     children: [
+      {
+        index: true,
+        Component: Home,
+      },
       {
         path: "sign-in",
         Component: SignInForm,
