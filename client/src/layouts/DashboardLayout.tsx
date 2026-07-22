@@ -1,21 +1,31 @@
+import { AxiosError } from "axios";
 import { NavLink, Outlet, useNavigate } from "react-router";
 
+import { axiosPrivate } from "../lib/axios-instance";
 import { cn } from "../lib/utils";
+import { useAuthStore } from "../store/authStore";
+import { useToastStore } from "../store/toastStore";
+
 import Dashboard from "../components/global/icons/Dashboard";
 import Logo from "../components/global/icons/Logo";
 import Transactions from "../components/global/icons/Transactions";
-import { useAuthStore } from "../store/authStore";
-import { axiosPrivate } from "../lib/axios-instance";
 
 const DashboardLayout = () => {
   const navigate = useNavigate();
   const { logout } = useAuthStore();
+  const { addToast } = useToastStore();
 
   const handleLogout = async () => {
     try {
-      await axiosPrivate.post("/logout");
-    } catch (error) {
-      console.error("Logout failed:", error);
+      await axiosPrivate.post("/auth/logout");
+    } catch (err) {
+      let errMsg = "Something went wrong. Please try again.";
+      if (err instanceof AxiosError) {
+        errMsg = err.response?.data?.message ?? err.message ?? errMsg;
+      } else if (err instanceof Error) {
+        errMsg = err.message;
+      }
+      addToast({ message: errMsg, type: "error" });
     } finally {
       logout();
       navigate("/login");

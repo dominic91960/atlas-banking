@@ -5,7 +5,7 @@ const Home = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    navigate("/sign-in", { replace: true });
+    navigate("/dashboard", { replace: true });
     return;
   }, [navigate]);
 
