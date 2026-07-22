@@ -440,18 +440,36 @@ export const login = async (
     }
 
     const jwtSecret = process.env.JWT_SECRET;
+    const refreshTokenSecret =
+      process.env.REFRESH_TOKEN_SECRET;
 
     if (!jwtSecret) {
       throw new Error("JWT_SECRET is not configured");
     }
 
-    const token = jwt.sign(
+    if (!refreshTokenSecret) {
+      throw new Error(
+        "REFRESH_TOKEN_SECRET is not configured"
+      );
+    }
+
+    const userId = String(user.getDataValue("id"));
+    const accountNumber = String(
+      user.getDataValue("account_number")
+    );
+    const storedUsername = String(
+      user.getDataValue("username")
+    );
+
+    /*
+     * Short-lived access token (15 minutes).
+     * Sent in the response body for the client to store in memory.
+     */
+    const accessToken = jwt.sign(
       {
-        sub: String(user.getDataValue("id")),
-        accountNumber: String(
-          user.getDataValue("account_number")
-        ),
-        username: String(user.getDataValue("username")),
+        sub: userId,
+        accountNumber,
+        username: storedUsername,
       },
       jwtSecret,
       {
@@ -462,15 +480,44 @@ export const login = async (
       }
     );
 
+    /*
+     * Long-lived refresh token (7 days).
+     * Sent as an httpOnly cookie so it is inaccessible to client-side
+     * JavaScript and resistant to XSS attacks.
+     */
+    const refreshToken = jwt.sign(
+      {
+        sub: userId,
+        accountNumber,
+        username: storedUsername,
+      },
+      refreshTokenSecret,
+      {
+        algorithm: "HS256",
+        expiresIn: "7d",
+        issuer: "atlas-banking-api",
+        audience: "atlas-banking-client",
+      }
+    );
+
+    const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: SEVEN_DAYS_MS,
+      path: "/",
+    });
+
     return res.status(200).json({
       message: "Signed in successfully",
-      token,
+      accessToken,
       expiresIn: 900,
       user: {
-        id: user.getDataValue("id"),
-        accountNumber:
-          user.getDataValue("account_number"),
-        username: user.getDataValue("username"),
+        id: userId,
+        accountNumber,
+        username: storedUsername,
       },
     });
   } catch (error) {

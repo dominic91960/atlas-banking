@@ -34,10 +34,11 @@ const SignInForm = () => {
         { ...data },
         {
           headers: { "Content-Type": "application/json" },
+          withCredentials: true,
         },
       );
-      const accessToken = res.data.accessToken;
-      setAuth({ user: data.username, accessToken });
+      const { accessToken, user } = res.data;
+      setAuth({ user, accessToken });
       navigate("/dashboard", { replace: true });
     } catch (err) {
       let errMsg = "Something went wrong. Please try again.";

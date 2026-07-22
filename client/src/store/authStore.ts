@@ -1,7 +1,13 @@
 import { create } from "zustand";
 
+export type User = {
+  id: string;
+  accountNumber: string;
+  username: string;
+};
+
 export type Auth = {
-  user: string;
+  user: User | null;
   accessToken: string;
 };
 
@@ -16,7 +22,7 @@ type AuthStore = {
 };
 
 const initialAuth: Auth = {
-  user: "",
+  user: null,
   accessToken: "",
 };
 

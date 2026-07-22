@@ -5,6 +5,7 @@ import express, {
 } from "express";
 import "dotenv/config";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import errorHandler from "./middleware/error-handler.js";
 import sequelize from "./utils/db.js";
 import { generalLimiter } from "./middleware/rate-limit.js";
@@ -20,10 +21,12 @@ const PORT = process.env.PORT!;
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN!;
 
 app.use(express.json());
+app.use(cookieParser());
 app.use(helmet());
 app.use(
   cors({
     origin: CLIENT_ORIGIN,
+    credentials: true,
     methods: [
       "GET",
       "POST",
