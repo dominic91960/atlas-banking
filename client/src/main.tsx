@@ -12,6 +12,7 @@ import ResetPwdForm from "./components/reset-pwd/ResetPwdForm.tsx";
 import SignUpFlow from "./components/sign-up/SignUpFlow.tsx";
 import SignInForm from "./components/sign-in/SignInForm.tsx";
 import ToastContainer from "./components/global/ui/ToastContainer.tsx";
+import Transactions from "./components/transactions/Transactions.tsx";
 import "./index.css";
 
 const router = createBrowserRouter([
@@ -44,6 +45,16 @@ const router = createBrowserRouter([
       {
         index: true,
         Component: Dashboard,
+      },
+    ],
+  },
+  {
+    path: "/transactions",
+    Component: DashboardLayout,
+    children: [
+      {
+        index: true,
+        Component: Transactions,
       },
     ],
   },

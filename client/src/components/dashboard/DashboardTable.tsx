@@ -34,10 +34,12 @@ const transactions: Transaction[] = [
 
 const DashboardTable = () => {
   return (
-    <div className="bg-secondary flex min-h-0 flex-1 flex-col gap-8 p-8">
-      <p>Recent Transactions</p>
+    <div className="bg-secondary flex min-h-0 grow flex-col gap-8 p-8">
+      <p className="text-[18px] font-medium text-neutral-100">
+        Recent Transactions
+      </p>
 
-      <div className="min-h-0 flex-1 overflow-auto">
+      <div className="min-h-0 grow overflow-auto">
         <RecentTransactions data={transactions} />
       </div>
     </div>
