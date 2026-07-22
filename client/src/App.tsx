@@ -7,10 +7,13 @@ import SignUpFlow from "./components/client-side/sign-up/SignUpFlow";
 import SignInForm from "./components/client-side/sign-in/SignInForm";
 
 const App = () => {
-  const [signUpComplete, setSignUpComplete] = useState(true);
+  const [authStep, setAuthStep] = useState<"signUp" | "signIn" | "pwdReset">(
+    "signIn",
+  );
 
-  const handleSignUpComplete = () => setSignUpComplete(true);
-  const handleCancelSignIn = () => setSignUpComplete(false);
+  const handleOnClickSignIn = () => setAuthStep("signIn");
+  const handleOnClickSignUp = () => setAuthStep("signUp");
+  const handleOnClickPwdReset = () => setAuthStep("pwdReset");
 
   return (
     <main className="flex h-dvh p-8">
@@ -28,11 +31,14 @@ const App = () => {
 
           {/* Form Area */}
           <div className="bg-secondary flex grow px-8 py-10">
-            {!signUpComplete && (
-              <SignUpFlow onSignUpComplete={handleSignUpComplete} />
+            {authStep === "signUp" && (
+              <SignUpFlow onClickSignIn={handleOnClickSignIn} />
             )}
-            {signUpComplete && (
-              <SignInForm onCancelSignIn={handleCancelSignIn} />
+            {authStep === "signIn" && (
+              <SignInForm onClickSignUp={handleOnClickSignUp} />
+            )}
+            {authStep === "pwdReset" && (
+              <SignInForm onClickSignUp={handleOnClickPwdReset} />
             )}
           </div>
 

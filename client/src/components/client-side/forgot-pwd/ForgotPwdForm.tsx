@@ -4,21 +4,16 @@ import { useNavigate } from "react-router";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { useToastStore } from "../../../store/toastStore";
-import InputGroup from "../../global/ui/InputGroup";
-import PasswordInputGroup from "../../global/ui/PasswordInputGroup";
-import PrimaryButton from "../../global/ui/PrimaryButton";
-import api from "../../../lib/axios-instance";
-import {
-  signInFormSchema,
-  type TSignInForm,
-} from "../../../lib/validations/sign-in";
 import { useAuthStore } from "../../../store/authStore";
+import {
+  forgotPwdFormSchema,
+  type TForgotPwdForm,
+} from "../../../lib/validations/forgot-pwd";
+import api from "../../../lib/axios-instance";
+import InputGroup from "../../global/ui/InputGroup";
+import PrimaryButton from "../../global/ui/PrimaryButton";
 
-type SignInFormProps = {
-  onClickSignUp: () => void;
-};
-
-const SignInForm: React.FC<SignInFormProps> = ({ onClickSignUp }) => {
+const ForgotPwdForm = () => {
   const { addToast } = useToastStore();
   const { setAuth } = useAuthStore();
   const navigate = useNavigate();
@@ -27,11 +22,11 @@ const SignInForm: React.FC<SignInFormProps> = ({ onClickSignUp }) => {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<TSignInForm>({
-    resolver: zodResolver(signInFormSchema),
+  } = useForm<TForgotPwdForm>({
+    resolver: zodResolver(forgotPwdFormSchema),
   });
 
-  const onSubmit = async (data: TSignInForm) => {
+  const onSubmit = async (data: TForgotPwdForm) => {
     try {
       const res = await api.post(
         "/auth/login",
@@ -80,14 +75,6 @@ const SignInForm: React.FC<SignInFormProps> = ({ onClickSignUp }) => {
           {...register("username")}
           errorMessage={errors.username?.message}
         />
-
-        {/* Passwrd */}
-        <PasswordInputGroup
-          id="password"
-          label="Enter password"
-          {...register("password")}
-          errorMessage={errors.password?.message}
-        />
       </div>
 
       {/* CTA Wrapper */}
@@ -95,11 +82,11 @@ const SignInForm: React.FC<SignInFormProps> = ({ onClickSignUp }) => {
         <PrimaryButton type="submit" text="Sign In" disabled={isSubmitting} />
         <div className="flex items-center justify-between">
           <p>Don't have an account?</p>
-          <button onClick={onClickSignUp}>Sign Up</button>
+          <button>Sign Up</button>
         </div>
       </div>
     </form>
   );
 };
 
-export default SignInForm;
+export default ForgotPwdForm;

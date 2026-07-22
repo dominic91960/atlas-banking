@@ -14,10 +14,10 @@ import type {
 } from "../../../lib/validations/sign-up";
 
 type SignUpFlowProps = {
-  onSignUpComplete: () => void;
+  onClickSignIn: () => void;
 };
 
-const SignUpFlow: React.FC<SignUpFlowProps> = ({ onSignUpComplete }) => {
+const SignUpFlow: React.FC<SignUpFlowProps> = ({ onClickSignIn }) => {
   const { addToast } = useToastStore();
   const nicDataRef = useRef<TNicStep>({ nic: "", accountNumber: "" });
   const [email, setEmail] = useState("");
@@ -84,7 +84,7 @@ const SignUpFlow: React.FC<SignUpFlowProps> = ({ onSignUpComplete }) => {
         username: data.username,
         password: data.password,
       });
-      onSignUpComplete();
+      onClickSignIn();
     } catch (err) {
       let errMsg = "Something went wrong. Please try again.";
       if (err instanceof AxiosError) {
@@ -101,7 +101,7 @@ const SignUpFlow: React.FC<SignUpFlowProps> = ({ onSignUpComplete }) => {
       {step == 1 && (
         <BankAccForm
           onComplete={handleNICComplete}
-          onSignUpComplete={onSignUpComplete}
+          onSignUpComplete={onClickSignIn}
         />
       )}
       {step == 2 && (
@@ -110,7 +110,7 @@ const SignUpFlow: React.FC<SignUpFlowProps> = ({ onSignUpComplete }) => {
           expiresIn={expiresIn}
           onBack={() => setStep(1)}
           onOTPResend={handleOtpResend}
-          onSignUpComplete={onSignUpComplete}
+          onSignUpComplete={onClickSignIn}
           onVerify={handleOtpVerify}
         />
       )}
@@ -118,7 +118,7 @@ const SignUpFlow: React.FC<SignUpFlowProps> = ({ onSignUpComplete }) => {
         <SignUpForm
           onBack={() => setStep(2)}
           onComplete={handlePasswordComplete}
-          onSignUpComplete={onSignUpComplete}
+          onSignUpComplete={onClickSignIn}
         />
       )}
     </>
