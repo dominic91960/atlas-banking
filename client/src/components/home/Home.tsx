@@ -9,7 +9,7 @@ const Home = () => {
     return;
   }, [navigate]);
 
-  return <div></div>;
+  return <div className="bg-secondary fixed inset-0"></div>;
 };
 
 export default Home;

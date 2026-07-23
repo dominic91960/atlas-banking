@@ -109,7 +109,9 @@ const OTPForm: React.FC<OTPFormProps> = ({
         <PrimaryButton type="submit" disabled={isSubmitting}>
           Verify
         </PrimaryButton>
-        <SecondaryButton type="button" text="Back" onClick={onBack} />
+        <SecondaryButton type="button" onClick={onBack}>
+          Back
+        </SecondaryButton>
         <div className="flex items-center justify-between">
           <p>Have an account already?</p>
           <Link to="/sign-in" className="transition-default hover:text-primary">

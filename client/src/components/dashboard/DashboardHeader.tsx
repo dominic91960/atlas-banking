@@ -1,13 +1,8 @@
-import Notification from "../global/icons/Notification";
-import Settings from "../global/icons/Settings";
+import { getGreeting } from "../../lib/utils";
 import { useAuthStore } from "../../store/authStore";
 
-const getGreeting = () => {
-  const hour = new Date().getHours();
-  if (hour < 12) return "Good Morning";
-  if (hour < 17) return "Good Afternoon";
-  return "Good Evening";
-};
+import Notification from "../global/icons/Notification";
+import Settings from "../global/icons/Settings";
 
 const DashboardHeader = () => {
   const { auth } = useAuthStore();
@@ -24,7 +19,9 @@ const DashboardHeader = () => {
             className="size-full object-cover object-center"
           />
         </div>
-        <p className="text-[30px]">{getGreeting()}, {username}.</p>
+        <p className="text-[30px]">
+          {getGreeting()}, {username}.
+        </p>
       </div>
 
       {/* Settings */}
@@ -37,4 +34,3 @@ const DashboardHeader = () => {
 };
 
 export default DashboardHeader;
-

@@ -43,12 +43,11 @@ const Dashboard = () => {
     };
   }, [axiosPrivate]);
 
-  // The most recent transaction's balance is the current account balance
   const currentBalance =
     transactions.length > 0 ? transactions[0].balance : null;
 
   return (
-    <div className="flex grow min-h-0 flex-col gap-px">
+    <div className="flex min-h-0 grow flex-col gap-px">
       <DashboardHeader />
       <DashboardInfo
         balance={currentBalance}

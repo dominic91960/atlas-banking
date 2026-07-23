@@ -1,32 +1,5 @@
-/**
- * Format a balance value for display.
- * Numbers under 100,000 are shown in full with commas.
- * Larger values are abbreviated: K, M, B, T.
- */
-const formatBalance = (value: number): string => {
-  if (value < 100_000) {
-    return value.toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
-  }
-
-  const tiers = [
-    { threshold: 1_000_000_000_000, suffix: "T" },
-    { threshold: 1_000_000_000, suffix: "B" },
-    { threshold: 1_000_000, suffix: "M" },
-    { threshold: 100_000, suffix: "K" },
-  ];
-
-  for (const { threshold, suffix } of tiers) {
-    if (value >= threshold) {
-      const scaled = value / (suffix === "K" ? 1_000 : threshold);
-      return scaled.toFixed(2) + suffix;
-    }
-  }
-
-  return value.toFixed(2);
-};
+import { formatBalance } from "../../lib/utils";
+import Logo from "../global/icons/Logo";
 
 interface BalanceDetailsProps {
   balance: string | null;
@@ -46,23 +19,44 @@ const BalanceDetails = ({ balance, isLoading, error }: BalanceDetailsProps) => {
       : "";
 
   return (
-    <div className="bg-secondary flex flex-col justify-between p-8 text-neutral-100">
+    <div className="bg-secondary relative flex min-w-112.5 flex-col justify-between p-8 text-neutral-100">
       <p className="text-[18px] font-medium">Total Account Balance</p>
 
-      <div className="flex items-end gap-4">
-        <p className="font-title text-[20px] leading-[56px]">LKR</p>
-        {isLoading ? (
-          <div className="mb-2 h-10 w-48 animate-pulse rounded bg-neutral-700" />
-        ) : error ? (
-          <p className="text-[18px] text-red-400">{error}</p>
-        ) : numericBalance !== null ? (
+      {isLoading && (
+        <div className="bg-secondary absolute inset-0 z-50 flex items-center justify-center">
+          <Logo className="w-40 animate-pulse" />
+        </div>
+      )}
+
+      {!isLoading && error && (
+        <div className="bg-secondary absolute inset-0 z-50 flex flex-col items-center justify-center gap-4">
+          <p>Failed to account balance. Please try again.</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="transition-default text-primary w-fit text-[1.2em] uppercase underline hover:text-neutral-100"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {!isLoading && !error && numericBalance === null && (
+        <div className="flex items-end gap-4">
+          <p className="font-title text-[20px] leading-14">LKR</p>
+          <p className="font-title text-[48px]" title="LKR 0.00">
+            LKR 0.00
+          </p>
+        </div>
+      )}
+
+      {!isLoading && !error && numericBalance !== null && (
+        <div className="flex items-end gap-4">
+          <p className="font-title text-[20px] leading-14">LKR</p>
           <p className="font-title text-[48px]" title={`LKR ${fullBalance}`}>
             {formatBalance(numericBalance)}
           </p>
-        ) : (
-          <p className="font-title text-[48px]">—</p>
-        )}
-      </div>
+        </div>
+      )}
 
       <button className="transition-default hover:text-primary group flex w-fit items-center gap-2">
         More Details

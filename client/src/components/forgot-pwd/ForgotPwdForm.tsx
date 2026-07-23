@@ -92,11 +92,9 @@ const ForgotPwdForm = () => {
           Confirm
         </PrimaryButton>
         <Link to="/sign-in">
-          <SecondaryButton
-            type="button"
-            text="Cancel"
-            disabled={isSubmitting}
-          />
+          <SecondaryButton type="button" disabled={isSubmitting}>
+            Cancel
+          </SecondaryButton>
         </Link>
       </div>
     </form>

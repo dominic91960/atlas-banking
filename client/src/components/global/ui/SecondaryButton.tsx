@@ -4,21 +4,22 @@ import { cn } from "../../../lib/utils";
 type SecondaryButtonProps = React.DetailedHTMLProps<
   React.ButtonHTMLAttributes<HTMLButtonElement>,
   HTMLButtonElement
-> & { text: string };
+>;
 
 const SecondaryButton: React.FC<SecondaryButtonProps> = ({
-  text,
+  children,
+  className,
   ...props
 }) => {
   return (
     <button
       className={cn(
-        "border-primary w-full border py-2 font-medium uppercase disabled:pointer-events-none disabled:opacity-50 transition-default hover:opacity-80",
-        props.className,
+        "border-primary transition-default w-full border px-4 py-2 font-medium uppercase hover:opacity-80 disabled:pointer-events-none disabled:opacity-50",
+        className,
       )}
       {...props}
     >
-      {text}
+      {children}
     </button>
   );
 };

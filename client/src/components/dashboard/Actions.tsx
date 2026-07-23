@@ -12,22 +12,22 @@ const Actions = () => {
         to="/transactions"
         className="bg-secondary transition-default flex flex-col items-center gap-5 p-6 hover:bg-neutral-800"
       >
-        <Transfer className="w-[32px]" />
+        <Transfer className="w-8" />
         <p>Credit Transfer</p>
       </Link>
 
       <button className="bg-secondary transition-default flex flex-col items-center gap-5 p-6 hover:bg-neutral-800">
-        <Bill className="h-[32px]" />
+        <Bill className="h-8" />
         <p>Bill Payment</p>
       </button>
 
       <button className="bg-secondary transition-default flex flex-col items-center gap-5 p-6 hover:bg-neutral-800">
-        <TopUp className="w-[32px]" />
+        <TopUp className="w-8" />
         <p>Top-Up</p>
       </button>
 
       <button className="bg-secondary transition-default flex flex-col items-center gap-5 p-6 hover:bg-neutral-800">
-        <Money className="w-[32px]" />
+        <Money className="w-8" />
         <p>Send Money</p>
       </button>
     </div>

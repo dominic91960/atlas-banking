@@ -100,7 +100,9 @@ const TransactionOtpForm: React.FC<TransactionOtpFormProps> = ({
         <PrimaryButton type="submit" disabled={isSubmitting || countdown === 0}>
           {isSubmitting ? "Verifying..." : "Confirm Transfer"}
         </PrimaryButton>
-        <SecondaryButton type="button" text="Cancel" onClick={onBack} />
+        <SecondaryButton type="button" onClick={onBack}>
+          Cancel
+        </SecondaryButton>
       </div>
     </form>
   );

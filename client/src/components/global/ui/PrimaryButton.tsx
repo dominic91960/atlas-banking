@@ -8,13 +8,14 @@ type PrimaryButtonProps = React.DetailedHTMLProps<
 
 const PrimaryButton: React.FC<PrimaryButtonProps> = ({
   children,
+  className,
   ...props
 }) => {
   return (
     <button
       className={cn(
         "bg-primary text-secondary transition-default flex w-full items-center justify-center px-4 py-2 font-medium uppercase hover:opacity-80 disabled:pointer-events-none disabled:opacity-50",
-        props.className,
+        className,
       )}
       {...props}
     >
