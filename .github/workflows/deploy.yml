@@ -118,7 +118,6 @@ jobs:
 
             docker run -d \
               --name $CLIENT_CONTAINER \
-              -p 3000:3000 \
               --restart=always \
               $CLIENT_IMAGE:latest
 
@@ -189,7 +188,6 @@ jobs:
             docker run -d \
               --name $SERVER_CONTAINER \
               --env-file .env \
-              -p ${PORT}:${PORT} \
               $SERVER_IMAGE:latest
 
             rm -f .env
