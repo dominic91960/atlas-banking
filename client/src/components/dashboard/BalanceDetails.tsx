@@ -1,11 +1,67 @@
-const BalanceDetails = () => {
+/**
+ * Format a balance value for display.
+ * Numbers under 100,000 are shown in full with commas.
+ * Larger values are abbreviated: K, M, B, T.
+ */
+const formatBalance = (value: number): string => {
+  if (value < 100_000) {
+    return value.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  }
+
+  const tiers = [
+    { threshold: 1_000_000_000_000, suffix: "T" },
+    { threshold: 1_000_000_000, suffix: "B" },
+    { threshold: 1_000_000, suffix: "M" },
+    { threshold: 100_000, suffix: "K" },
+  ];
+
+  for (const { threshold, suffix } of tiers) {
+    if (value >= threshold) {
+      const scaled = value / (suffix === "K" ? 1_000 : threshold);
+      return scaled.toFixed(2) + suffix;
+    }
+  }
+
+  return value.toFixed(2);
+};
+
+interface BalanceDetailsProps {
+  balance: string | null;
+  isLoading: boolean;
+  error: string | null;
+}
+
+const BalanceDetails = ({ balance, isLoading, error }: BalanceDetailsProps) => {
+  const numericBalance = balance !== null ? parseFloat(balance) : null;
+
+  const fullBalance =
+    numericBalance !== null
+      ? numericBalance.toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })
+      : "";
+
   return (
     <div className="bg-secondary flex flex-col justify-between p-8 text-neutral-100">
       <p className="text-[18px] font-medium">Total Account Balance</p>
 
       <div className="flex items-end gap-4">
         <p className="font-title text-[20px] leading-[56px]">LKR</p>
-        <p className="font-title text-[48px]">89,999.28</p>
+        {isLoading ? (
+          <div className="mb-2 h-10 w-48 animate-pulse rounded bg-neutral-700" />
+        ) : error ? (
+          <p className="text-[18px] text-red-400">{error}</p>
+        ) : numericBalance !== null ? (
+          <p className="font-title text-[48px]" title={`LKR ${fullBalance}`}>
+            {formatBalance(numericBalance)}
+          </p>
+        ) : (
+          <p className="font-title text-[48px]">—</p>
+        )}
       </div>
 
       <button className="transition-default hover:text-primary group flex w-fit items-center gap-2">

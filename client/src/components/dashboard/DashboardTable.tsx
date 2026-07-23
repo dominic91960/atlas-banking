@@ -1,46 +1,17 @@
-import { useEffect, useState } from "react";
 import type { Transaction } from "../../lib/types";
-import useAxiosPrivate from "../../hooks/useAxiosPrivate";
 import RecentTransactions from "./RecentTransactions";
 
-const DashboardTable = () => {
-  const axiosPrivate = useAxiosPrivate();
+interface DashboardTableProps {
+  transactions: Transaction[];
+  isLoading: boolean;
+  error: string | null;
+}
 
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const fetchTransactions = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        const res = await axiosPrivate.get("/transactions/recent");
-
-        if (isMounted) {
-          setTransactions(res.data.transactions);
-        }
-      } catch (err) {
-        if (isMounted) {
-          setError("Failed to load recent transactions.");
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    fetchTransactions();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [axiosPrivate]);
-
+const DashboardTable = ({
+  transactions,
+  isLoading,
+  error,
+}: DashboardTableProps) => {
   return (
     <div className="bg-secondary flex min-h-0 grow flex-col gap-8 p-8">
       <p className="text-[18px] font-medium text-neutral-100">
@@ -117,4 +88,3 @@ const DashboardTable = () => {
 };
 
 export default DashboardTable;
-
