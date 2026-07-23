@@ -4,23 +4,25 @@ export const resetPwdFormSchema = z
   .object({
     password: z
       .string()
-      .min(8, "Password must be at least 8 characters")
-      .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-      .regex(/[a-z]/, "Password must contain at least one lowercase letter")
-      .regex(/\d/, "Password must contain at least one number")
-      .regex(
-        /[^A-Za-z0-9]/,
-        "Password must contain at least one special character",
-      ),
-    confirmPassword: z.string().min(1, "Please confirm your password"),
+      .min(8, "Cannot be below 8 characters")
+      .max(30, "Cannot exceed 30 characters")
+      .refine((v) => v === v.trim(), "Cannot start or end with spaces")
+      .regex(/[A-Z]/, "At least one uppercase letter required")
+      .regex(/[a-z]/, "At least one lowercase letter required")
+      .regex(/\d/, "At least one number required")
+      .regex(/[^\w\s]/, "At least one special character required"),
+    confirmPassword: z.string().trim().min(1, "Please fill this field"),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
     path: ["confirmPassword"],
   });
 
-export const resetPwdTokenSchema = z.string().regex(/^[a-f0-9]{64}$/i, {
-  message: "Invalid token",
-});
+export const resetPwdTokenSchema = z
+  .string()
+  .trim()
+  .regex(/^[a-fA-F0-9]{64}$/i, {
+    message: "Invalid token",
+  });
 
 export type TResetPwdForm = z.infer<typeof resetPwdFormSchema>;

@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 export const signInFormSchema = z.object({
-  username: z.string().min(1, "Please enter your username"),
-  password: z.string().min(1, "Please enter your password"),
+  username: z.string().trim().min(1, "Please fill this field"),
+  password: z.string().trim().min(1, "Please fill this field"),
 });
 
 export type TSignInForm = z.infer<typeof signInFormSchema>;

@@ -18,165 +18,59 @@ import {
   passwordResetRequestLimiter,
   passwordResetLimiter,
 } from "../middleware/rate-limit.js";
+import {
+  completeRegistrationValidation,
+  loginValidation,
+  registrationStartValidation,
+  otpVerificationValidation,
+  requestPasswordResetValidation,
+  resetPasswordValidation,
+} from "../validations/auth.validation.js";
 import validateRequest from "../middleware/validate-request.js";
 
 const router = Router();
 
+// Route to refresh the access token
+router.get("/refresh", refreshAccessToken);
+
+// Sign Up routes
 router.post(
   "/register/start",
   registrationStartLimiter,
-
-  body("accountNumber")
-    .trim()
-    .notEmpty()
-    .withMessage("Account number is required")
-    .isLength({ min: 4, max: 20 })
-    .withMessage("Account number must contain 4 to 20 characters"),
-
-  body("nic")
-    .trim()
-    .notEmpty()
-    .withMessage("NIC is required")
-    .isLength({ min: 9, max: 20 })
-    .withMessage("NIC must contain 9 to 20 characters"),
-
+  registrationStartValidation,
   validateRequest,
   startRegistration,
 );
-
 router.post(
   "/register/verify-otp",
   otpVerificationLimiter,
-
-  body("accountNumber")
-    .trim()
-    .notEmpty()
-    .withMessage("Account number is required"),
-
-  body("otp")
-    .trim()
-    .matches(/^\d{6}$/)
-    .withMessage("OTP must be a six-digit number"),
-
+  otpVerificationValidation,
   validateRequest,
   verifyRegistrationOTP,
 );
-
 router.post(
   "/register/complete",
-
-  body("accountNumber")
-    .trim()
-    .notEmpty()
-    .withMessage("Account number is required"),
-
-  body("username")
-    .trim()
-    .isLength({ min: 4, max: 50 })
-    .withMessage("Username must contain 4 to 50 characters")
-    .matches(/^[a-zA-Z0-9._-]+$/)
-    .withMessage(
-      "Username may only contain letters, numbers, dots, underscores and hyphens",
-    ),
-
-  body("password")
-    .isLength({ min: 10, max: 128 })
-    .withMessage("Password must contain at least 10 characters")
-    .matches(/[a-z]/)
-    .withMessage("Password must contain a lowercase letter")
-    .matches(/[A-Z]/)
-    .withMessage("Password must contain an uppercase letter")
-    .matches(/[0-9]/)
-    .withMessage("Password must contain a number")
-    .matches(/[^a-zA-Z0-9]/)
-    .withMessage("Password must contain a special character"),
-
+  completeRegistrationValidation,
   validateRequest,
   completeRegistration,
 );
 
-router.post(
-  "/login",
-  loginLimiter,
-
-  body("username").trim().notEmpty().withMessage("Username is required"),
-
-  body("password").notEmpty().withMessage("Password is required"),
-
-  validateRequest,
-  login,
-);
-
-router.get("/refresh", refreshAccessToken);
-
+// Sign In routes
+router.post("/login", loginLimiter, loginValidation, validateRequest, login);
 router.post("/logout", logout);
 
+// Password reset routes
 router.post(
   "/forgot-password",
   passwordResetRequestLimiter,
-
-  body("username")
-    .trim()
-    .notEmpty()
-    .withMessage("Username is required")
-    .isLength({ min: 4, max: 50 })
-    .withMessage("Username must contain 4 to 50 characters"),
-
-  body("accountNumber")
-    .trim()
-    .notEmpty()
-    .withMessage("Account number is required")
-    .isLength({ min: 4, max: 20 })
-    .withMessage("Account number must contain 4 to 20 characters"),
-
-  body("email")
-    .trim()
-    .notEmpty()
-    .withMessage("Email address is required")
-    .isEmail()
-    .withMessage("Enter a valid email address")
-    .normalizeEmail(),
-
+  requestPasswordResetValidation,
   validateRequest,
   requestPasswordReset,
 );
-
 router.post(
   "/reset-password",
   passwordResetLimiter,
-
-  body("token")
-    .trim()
-    .notEmpty()
-    .withMessage("Password-reset token is required")
-    .isLength({ min: 64, max: 64 })
-    .withMessage("The password-reset token is invalid")
-    .matches(/^[a-fA-F0-9]{64}$/)
-    .withMessage("The password-reset token is invalid"),
-
-  body("password")
-    .isLength({ min: 10, max: 128 })
-    .withMessage("Password must contain 10 to 128 characters")
-    .matches(/[a-z]/)
-    .withMessage("Password must contain a lowercase letter")
-    .matches(/[A-Z]/)
-    .withMessage("Password must contain an uppercase letter")
-    .matches(/[0-9]/)
-    .withMessage("Password must contain a number")
-    .matches(/[^a-zA-Z0-9]/)
-    .withMessage("Password must contain a special character"),
-
-  body("confirmPassword")
-    .notEmpty()
-    .withMessage("Password confirmation is required")
-    .custom((confirmPassword, { req }) => {
-      if (confirmPassword !== req.body.password) {
-        throw new Error("Password confirmation does not match");
-      }
-
-      return true;
-    }),
-
+  resetPasswordValidation,
   validateRequest,
   resetPassword,
 );

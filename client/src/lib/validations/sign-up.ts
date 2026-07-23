@@ -8,54 +8,58 @@ const CONSECUTIVE_PUNCTUATION_REGEX = /[._]{2,}/;
 export const nicStepSchema = z.object({
   nic: z
     .string()
-    .min(1, "National Identity Card number is required")
+    .trim()
+    .min(1, "Please fill this field")
     .refine(
       (val) => NID_OLD_FORMAT.test(val) || NID_NEW_FORMAT.test(val),
-      "Enter a valid NIC number (e.g. 911042754V or a 12-digit number)",
+      "Invalid NIC number (e.g. 911042754V or a 12-digit number)",
     ),
   accountNumber: z
     .string()
-    .min(1, "Account number is required")
-    .length(12, "Account number must be exactly 12 characters")
-    .regex(/^[0-9]+$/, "Account number must only contain numbers"),
+    .trim()
+    .min(1, "Please fill this field")
+    .length(12, "Must be exactly 12 characters")
+    .regex(/^[0-9]+$/, "Must only contain numbers"),
 });
 
 export const otpStepSchema = z.object({
   otp: z
     .string()
-    .length(6, "Please enter the complete 6-digit code")
-    .regex(/^[0-9]+$/, "Code must only contain numbers"),
+    .trim()
+    .length(6, "Must be exactly 6 characters")
+    .regex(/^[0-9]+$/, "Must only contain numbers"),
 });
 
 export const signUpStepSchema = z
   .object({
     username: z
       .string()
-      .min(4, "Username must be at least 4 characters")
-      .max(30, "Username cannot exceed 30 characters")
+      .trim()
+      .min(8, "Cannot be below 8 characters")
+      .max(30, "Cannot exceed 30 characters")
+      .refine((value) => /^[A-Za-z]/.test(value), "Must start with a letter")
       .regex(
         USERNAME_REGEX,
-        "Username must start with a letter and contain only letters, numbers, periods, and underscores",
+        "Can only contain letters, numbers, periods, and underscores",
       )
       .refine(
         (value) => !CONSECUTIVE_PUNCTUATION_REGEX.test(value),
-        "Username cannot contain consecutive periods or underscores",
+        "Cannot contain consecutive periods or underscores",
       )
       .refine(
         (value) => !/[._]$/.test(value),
-        "Username cannot end with a period or underscore",
+        "Cannot end with a period or underscore",
       ),
     password: z
       .string()
-      .min(8, "Password must be at least 8 characters")
-      .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-      .regex(/[a-z]/, "Password must contain at least one lowercase letter")
-      .regex(/\d/, "Password must contain at least one number")
-      .regex(
-        /[^A-Za-z0-9]/,
-        "Password must contain at least one special character",
-      ),
-    confirmPassword: z.string().min(1, "Please confirm your password"),
+      .min(8, "Cannot be below 8 characters")
+      .max(30, "Cannot exceed 30 characters")
+      .refine((v) => v === v.trim(), "Cannot start or end with spaces")
+      .regex(/[A-Z]/, "At least one uppercase letter required")
+      .regex(/[a-z]/, "At least one lowercase letter required")
+      .regex(/\d/, "At least one number required")
+      .regex(/[^\w\s]/, "At least one special character required"),
+    confirmPassword: z.string().trim().min(1, "Please fill this field"),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
