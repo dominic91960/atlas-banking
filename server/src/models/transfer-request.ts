@@ -25,7 +25,6 @@ const TransferRequest = sequelize.define(
       allowNull: false,
     },
 
-    // Store the bcrypt hash, never the actual OTP.
     otp_hash: {
       type: DataTypes.STRING(255),
       allowNull: false,
@@ -43,12 +42,7 @@ const TransferRequest = sequelize.define(
     },
 
     status: {
-      type: DataTypes.ENUM(
-        "PENDING",
-        "COMPLETED",
-        "EXPIRED",
-        "CANCELLED"
-      ),
+      type: DataTypes.ENUM("PENDING", "COMPLETED", "EXPIRED", "CANCELLED"),
       allowNull: false,
       defaultValue: "PENDING",
     },
@@ -67,7 +61,7 @@ const TransferRequest = sequelize.define(
   {
     tableName: "transfer_requests",
     timestamps: false,
-  }
+  },
 );
 
 export default TransferRequest;

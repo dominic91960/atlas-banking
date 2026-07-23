@@ -1,8 +1,8 @@
-import { DataTypes } from 'sequelize';
-import sequelize from '../utils/db.js';
+import { DataTypes } from "sequelize";
+import sequelize from "../utils/db.js";
 
 const CustomerAccount = sequelize.define(
-  'CustomerAccount',
+  "CustomerAccount",
   {
     account_number: {
       type: DataTypes.STRING(20),
@@ -26,9 +26,9 @@ const CustomerAccount = sequelize.define(
     },
   },
   {
-    tableName: 'customer_accounts',
+    tableName: "customer_accounts",
     timestamps: false,
-  }
+  },
 );
 
 export default CustomerAccount;

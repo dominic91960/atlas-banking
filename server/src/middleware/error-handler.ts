@@ -7,12 +7,7 @@ import {
   ForeignKeyConstraintError,
 } from "sequelize";
 
-const errorHandler: ErrorRequestHandler = (
-  err,
-  _req,
-  res,
-  _next
-) => {
+const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
   let status = 500;
   let message = "An unexpected server error occurred";
 
@@ -25,19 +20,12 @@ const errorHandler: ErrorRequestHandler = (
       message = "The referenced record is invalid";
     } else if (err instanceof ValidationError) {
       status = 400;
-      message = err.errors
-        .map((error) => error.message)
-        .join(", ");
+      message = err.errors.map((error) => error.message).join(", ");
     } else if (err instanceof DatabaseError) {
       status = 500;
       message = "A database operation failed";
     }
   }
-
-  /*
-   * Log the full error only on the server.
-   */
-  console.error(err);
 
   res.status(status).json({
     message,

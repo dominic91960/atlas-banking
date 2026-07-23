@@ -14,8 +14,7 @@ const registrationStartLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 5,
   message: {
-    message:
-      "Too many verification code requests. Please try again later.",
+    message: "Too many verification code requests. Please try again later.",
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -25,8 +24,7 @@ const otpVerificationLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 10,
   message: {
-    message:
-      "Too many verification attempts. Please try again later.",
+    message: "Too many verification attempts. Please try again later.",
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -36,8 +34,7 @@ const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 10,
   message: {
-    message:
-      "Too many sign-in attempts. Please try again later.",
+    message: "Too many sign-in attempts. Please try again later.",
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -47,8 +44,7 @@ const passwordResetRequestLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 5,
   message: {
-    message:
-      "Too many password-reset requests. Please try again later.",
+    message: "Too many password-reset requests. Please try again later.",
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -58,8 +54,7 @@ const passwordResetLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 10,
   message: {
-    message:
-      "Too many password-reset attempts. Please try again later.",
+    message: "Too many password-reset attempts. Please try again later.",
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -70,27 +65,25 @@ const transactionStartLimiter = rateLimit({
   limit: 10,
 
   message: {
-    message:
-      "Too many transaction requests. Please try again later.",
+    message: "Too many transaction requests. Please try again later.",
   },
 
   standardHeaders: true,
   legacyHeaders: false,
 });
 
-const transactionVerificationLimiter =
-  rateLimit({
-    windowMs: 15 * 60 * 1000,
-    limit: 10,
+const transactionVerificationLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
 
-    message: {
-      message:
-        "Too many transaction verification attempts. Please try again later.",
-    },
+  message: {
+    message:
+      "Too many transaction verification attempts. Please try again later.",
+  },
 
-    standardHeaders: true,
-    legacyHeaders: false,
-  });
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 export {
   generalLimiter,

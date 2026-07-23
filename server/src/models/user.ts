@@ -1,8 +1,8 @@
-import { DataTypes } from 'sequelize';
-import sequelize from '../utils/db.js';
+import { DataTypes } from "sequelize";
+import sequelize from "../utils/db.js";
 
 const User = sequelize.define(
-  'User',
+  "User",
   {
     id: {
       type: DataTypes.INTEGER,
@@ -29,9 +29,9 @@ const User = sequelize.define(
     },
   },
   {
-    tableName: 'users',
+    tableName: "users",
     timestamps: false,
-  }
+  },
 );
 
 export default User;

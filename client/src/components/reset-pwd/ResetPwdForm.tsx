@@ -40,8 +40,6 @@ const ResetPwdForm = () => {
 
   const onSubmit = async (data: TResetPwdForm) => {
     try {
-      console.log(token);
-
       await api.post("/auth/reset-password", { token, ...data });
       addToast({
         message: "Password reset successful.",

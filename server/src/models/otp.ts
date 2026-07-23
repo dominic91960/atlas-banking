@@ -9,7 +9,6 @@ const OTP = sequelize.define(
       primaryKey: true,
     },
 
-    // Stores a bcrypt hash, not the actual six-digit OTP
     otp_code: {
       type: DataTypes.STRING(255),
       allowNull: false,
@@ -35,7 +34,7 @@ const OTP = sequelize.define(
   {
     tableName: "otp_verifications",
     timestamps: false,
-  }
+  },
 );
 
 export default OTP;

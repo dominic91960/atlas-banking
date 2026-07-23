@@ -3,82 +3,48 @@ import express, {
   type Request,
   type Response,
 } from "express";
-import "dotenv/config";
+
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import "dotenv/config";
+import helmet from "helmet";
+
+import { generalLimiter } from "./middleware/rate-limit.js";
+import authRoutes from "./routes/auth.routes.js";
 import errorHandler from "./middleware/error-handler.js";
 import sequelize from "./utils/db.js";
-import { generalLimiter } from "./middleware/rate-limit.js";
-import helmet from "helmet";
-import authRoutes from "./routes/auth.routes.js";
 import transactionRoutes from "./routes/transaction.routes.js";
-
-// MUST REMOVE: db test
-import Employee from "./models/employee.js";
-
-/*
- * Import AuditLog so Sequelize registers the model.
- */
 import "./models/audit-log.js";
 
 const app: Application = express();
 const PORT = process.env.PORT!;
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN!;
 
-app.use(express.json());
+app.set("trust proxy", 1);
+
+app.use(express.json({ limit: "20kb" }));
 app.use(cookieParser());
 app.use(helmet());
-
-/*
- * Trust the first proxy hop so req.ip and
- * x-forwarded-for reflect the real client address.
- */
-app.set("trust proxy", 1);
 app.use(
   cors({
     origin: CLIENT_ORIGIN,
     credentials: true,
-    methods: [
-      "GET",
-      "POST",
-      "PUT",
-      "PATCH",
-      "DELETE",
-    ],
-    allowedHeaders: [
-      "Content-Type",
-      "Authorization",
-    ],
-  })
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  }),
 );
 app.use(generalLimiter);
-app.use("/api/auth", authRoutes);
-app.use("/api/transactions", transactionRoutes);
-
-app.use(
-  express.json({
-    limit: "20kb",
-  })
-);
 
 // Root GET Route
 app.get("/", (_: Request, res: Response) => {
   res.status(200).json({ message: "Server is running successfully." });
 });
 
-// MUST REMOVE: db test route
-app.get("/test", async (_, res, next) => {
-  try {
-    const users = await Employee.findAll();
-    const data = users.map((user) => user.toJSON());
-
-    res.status(200).json(data);
-  } catch (err) {
-    next(err);
-  }
-});
-
+// Auth Routes
 app.use("/api/auth", authRoutes);
+
+// Transaction Routes
+app.use("/api/transactions", transactionRoutes);
 
 // 404 Route
 app.use((_req, res) => {
@@ -92,11 +58,9 @@ const startServer = async () => {
   try {
     await sequelize.authenticate();
     await sequelize.sync();
-    app.listen(PORT, () => {
-      console.log(`Application is running at http://localhost:${PORT}`);
-    });
+    app.listen(PORT);
   } catch (err) {
-    console.log("Unable to connect to the database:", err);
+    console.error("Unable to start the server:", err);
   }
 };
 startServer();

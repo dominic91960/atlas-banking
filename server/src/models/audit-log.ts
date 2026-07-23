@@ -54,7 +54,7 @@ const AuditLog = sequelize.define(
   {
     tableName: "audit_logs",
     timestamps: false,
-  }
+  },
 );
 
 export default AuditLog;

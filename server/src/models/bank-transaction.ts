@@ -61,7 +61,7 @@ const BankTransaction = sequelize.define(
   {
     tableName: "bank_transactions",
     timestamps: false,
-  }
+  },
 );
 
 export default BankTransaction;

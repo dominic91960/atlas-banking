@@ -1,9 +1,5 @@
-import {
-  type RequestHandler,
-} from "express";
-import jwt, {
-  type JwtPayload,
-} from "jsonwebtoken";
+import { type RequestHandler } from "express";
+import jwt, { type JwtPayload } from "jsonwebtoken";
 
 interface AuthenticationPayload extends JwtPayload {
   sub: string;
@@ -11,17 +7,10 @@ interface AuthenticationPayload extends JwtPayload {
   username: string;
 }
 
-const authenticate: RequestHandler = (
-  req,
-  res,
-  next
-) => {
+const authenticate: RequestHandler = (req, res, next) => {
   const authorization = req.header("Authorization");
 
-  if (
-    !authorization ||
-    !authorization.startsWith("Bearer ")
-  ) {
+  if (!authorization || !authorization.startsWith("Bearer ")) {
     return res.status(401).json({
       message: "Authentication is required",
     });
@@ -31,9 +20,7 @@ const authenticate: RequestHandler = (
   const jwtSecret = process.env.JWT_SECRET;
 
   if (!jwtSecret) {
-    return next(
-      new Error("JWT_SECRET is not configured")
-    );
+    return next(new Error("JWT_SECRET is not configured"));
   }
 
   try {
@@ -54,18 +41,12 @@ const authenticate: RequestHandler = (
       });
     }
 
-    /*
-     * Store the verified identity in res.locals.
-     * Controllers must use this instead of trusting request-body data.
-     */
-    res.locals.auth =
-      payload as AuthenticationPayload;
+    res.locals.auth = payload as AuthenticationPayload;
 
     next();
   } catch {
     return res.status(401).json({
-      message:
-        "The authentication token is invalid or has expired",
+      message: "The authentication token is invalid or has expired",
     });
   }
 };

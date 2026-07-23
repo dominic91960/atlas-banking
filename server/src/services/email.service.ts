@@ -24,7 +24,7 @@ const brevoClient = new BrevoClient({
 
 export const sendRegistrationOTP = async (
   recipientEmail: string,
-  otpCode: string
+  otpCode: string,
 ): Promise<void> => {
   await brevoClient.transactionalEmails.sendTransacEmail({
     sender: {
@@ -94,7 +94,7 @@ export const sendRegistrationOTP = async (
 export const sendPasswordResetEmail = async (
   recipientEmail: string,
   resetLink: string,
-  expiryMinutes: number
+  expiryMinutes: number,
 ): Promise<void> => {
   await brevoClient.transactionalEmails.sendTransacEmail({
     sender: {
@@ -192,15 +192,13 @@ If you did not request this password reset, you can ignore this email.
   });
 };
 
-
 export const sendTransactionOTP = async (
   recipientEmail: string,
   otpCode: string,
   receiverAccountNumber: string,
-  amount: string
+  amount: string,
 ): Promise<void> => {
-  const maskedReceiver =
-    maskAccountNumber(receiverAccountNumber);
+  const maskedReceiver = maskAccountNumber(receiverAccountNumber);
 
   await brevoClient.transactionalEmails.sendTransacEmail({
     sender: {
@@ -285,17 +283,12 @@ Do not share this code with anyone.
   });
 };
 
-const maskAccountNumber = (
-  accountNumber: string
-): string => {
+const maskAccountNumber = (accountNumber: string): string => {
   if (accountNumber.length <= 4) {
     return "*".repeat(accountNumber.length);
   }
 
-  return (
-    "*".repeat(accountNumber.length - 4) +
-    accountNumber.slice(-4)
-  );
+  return "*".repeat(accountNumber.length - 4) + accountNumber.slice(-4);
 };
 
 const escapeHTML = (value: string): string => {

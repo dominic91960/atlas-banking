@@ -9,10 +9,6 @@ const PasswordReset = sequelize.define(
       primaryKey: true,
     },
 
-    /*
-     * Store only a SHA-256 hash of the reset token.
-     * The actual token is sent to the customer's email.
-     */
     token_hash: {
       type: DataTypes.STRING(64),
       allowNull: false,
@@ -33,7 +29,7 @@ const PasswordReset = sequelize.define(
   {
     tableName: "password_resets",
     timestamps: false,
-  }
+  },
 );
 
 export default PasswordReset;

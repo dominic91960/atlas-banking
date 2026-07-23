@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { body } from "express-validator";
+
 import {
   startRegistration,
   verifyRegistrationOTP,
@@ -10,7 +11,6 @@ import {
   resetPassword,
   logout,
 } from "../controllers/auth.controller.js";
-import validateRequest from "../middleware/validate-request.js";
 import {
   registrationStartLimiter,
   otpVerificationLimiter,
@@ -18,12 +18,10 @@ import {
   passwordResetRequestLimiter,
   passwordResetLimiter,
 } from "../middleware/rate-limit.js";
+import validateRequest from "../middleware/validate-request.js";
 
 const router = Router();
 
-/*
- * Step 1: Verify account number and NIC, then send OTP.
- */
 router.post(
   "/register/start",
   registrationStartLimiter,
@@ -43,12 +41,9 @@ router.post(
     .withMessage("NIC must contain 9 to 20 characters"),
 
   validateRequest,
-  startRegistration
+  startRegistration,
 );
 
-/*
- * Step 2: Verify OTP.
- */
 router.post(
   "/register/verify-otp",
   otpVerificationLimiter,
@@ -64,12 +59,9 @@ router.post(
     .withMessage("OTP must be a six-digit number"),
 
   validateRequest,
-  verifyRegistrationOTP
+  verifyRegistrationOTP,
 );
 
-/*
- * Step 3: Create username and password.
- */
 router.post(
   "/register/complete",
 
@@ -84,7 +76,7 @@ router.post(
     .withMessage("Username must contain 4 to 50 characters")
     .matches(/^[a-zA-Z0-9._-]+$/)
     .withMessage(
-      "Username may only contain letters, numbers, dots, underscores and hyphens"
+      "Username may only contain letters, numbers, dots, underscores and hyphens",
     ),
 
   body("password")
@@ -100,43 +92,25 @@ router.post(
     .withMessage("Password must contain a special character"),
 
   validateRequest,
-  completeRegistration
+  completeRegistration,
 );
 
-/*
- * Sign in.
- */
 router.post(
   "/login",
   loginLimiter,
 
-  body("username")
-    .trim()
-    .notEmpty()
-    .withMessage("Username is required"),
+  body("username").trim().notEmpty().withMessage("Username is required"),
 
-  body("password")
-    .notEmpty()
-    .withMessage("Password is required"),
+  body("password").notEmpty().withMessage("Password is required"),
 
   validateRequest,
-  login
+  login,
 );
 
-/*
- * Refresh the access token using the httpOnly refresh-token cookie.
- */
 router.get("/refresh", refreshAccessToken);
 
-/*
- * Sign out.
- */
 router.post("/logout", logout);
 
-/*
- * Password reset step 1:
- * Validate account details and email the reset link.
- */
 router.post(
   "/forgot-password",
   passwordResetRequestLimiter,
@@ -146,18 +120,14 @@ router.post(
     .notEmpty()
     .withMessage("Username is required")
     .isLength({ min: 4, max: 50 })
-    .withMessage(
-      "Username must contain 4 to 50 characters"
-    ),
+    .withMessage("Username must contain 4 to 50 characters"),
 
   body("accountNumber")
     .trim()
     .notEmpty()
     .withMessage("Account number is required")
     .isLength({ min: 4, max: 20 })
-    .withMessage(
-      "Account number must contain 4 to 20 characters"
-    ),
+    .withMessage("Account number must contain 4 to 20 characters"),
 
   body("email")
     .trim()
@@ -168,13 +138,9 @@ router.post(
     .normalizeEmail(),
 
   validateRequest,
-  requestPasswordReset
+  requestPasswordReset,
 );
 
-/*
- * Password reset step 2:
- * Validate the token and save the new password.
- */
 router.post(
   "/reset-password",
   passwordResetLimiter,
@@ -190,39 +156,29 @@ router.post(
 
   body("password")
     .isLength({ min: 10, max: 128 })
-    .withMessage(
-      "Password must contain 10 to 128 characters"
-    )
+    .withMessage("Password must contain 10 to 128 characters")
     .matches(/[a-z]/)
-    .withMessage(
-      "Password must contain a lowercase letter"
-    )
+    .withMessage("Password must contain a lowercase letter")
     .matches(/[A-Z]/)
-    .withMessage(
-      "Password must contain an uppercase letter"
-    )
+    .withMessage("Password must contain an uppercase letter")
     .matches(/[0-9]/)
     .withMessage("Password must contain a number")
     .matches(/[^a-zA-Z0-9]/)
-    .withMessage(
-      "Password must contain a special character"
-    ),
+    .withMessage("Password must contain a special character"),
 
   body("confirmPassword")
     .notEmpty()
     .withMessage("Password confirmation is required")
     .custom((confirmPassword, { req }) => {
       if (confirmPassword !== req.body.password) {
-        throw new Error(
-          "Password confirmation does not match"
-        );
+        throw new Error("Password confirmation does not match");
       }
 
       return true;
     }),
 
   validateRequest,
-  resetPassword
+  resetPassword,
 );
 
 export default router;

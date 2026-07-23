@@ -1,15 +1,7 @@
-import {
-  type Request,
-  type Response,
-  type NextFunction,
-} from "express";
+import { type Request, type Response, type NextFunction } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import {
-  randomInt,
-  randomBytes,
-  createHash,
-} from "node:crypto";
+import { randomInt, randomBytes, createHash } from "node:crypto";
 import sequelize from "../utils/db.js";
 import CustomerAccount from "../models/customer-account.js";
 import User from "../models/user.js";
@@ -19,11 +11,7 @@ import {
   sendPasswordResetEmail,
 } from "../services/email.service.js";
 import PasswordReset from "../models/password-reset.js";
-import {
-  logAudit,
-  getClientIp,
-} from "../services/audit-log.service.js";
-
+import { logAudit, getClientIp } from "../services/audit-log.service.js";
 
 const OTP_EXPIRY_MINUTES = 5;
 const MAX_OTP_ATTEMPTS = 5;
@@ -33,7 +21,7 @@ const DEFAULT_PASSWORD_RESET_EXPIRY_MINUTES = 15;
 
 const PASSWORD_RESET_EXPIRY_MINUTES = Number(
   process.env.PASSWORD_RESET_EXPIRY_MINUTES ??
-    DEFAULT_PASSWORD_RESET_EXPIRY_MINUTES
+    DEFAULT_PASSWORD_RESET_EXPIRY_MINUTES,
 );
 
 const normalizeAccountNumber = (value: unknown): string => {
@@ -41,32 +29,31 @@ const normalizeAccountNumber = (value: unknown): string => {
 };
 
 const normalizeNIC = (value: unknown): string => {
-  return String(value ?? "").trim().toUpperCase();
+  return String(value ?? "")
+    .trim()
+    .toUpperCase();
 };
 
 const normalizeUsername = (value: unknown): string => {
-  return String(value ?? "").trim().toLowerCase();
+  return String(value ?? "")
+    .trim()
+    .toLowerCase();
 };
 
 const normalizeEmail = (value: unknown): string => {
-  return String(value ?? "").trim().toLowerCase();
+  return String(value ?? "")
+    .trim()
+    .toLowerCase();
 };
 
 const hashResetToken = (token: string): string => {
-  return createHash("sha256")
-    .update(token)
-    .digest("hex");
+  return createHash("sha256").update(token).digest("hex");
 };
 
-/**
- * Step 1:
- * Check the account number and NIC.
- * Generate and email an OTP.
- */
 export const startRegistration = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const accountNumber = normalizeAccountNumber(req.body.accountNumber);
@@ -115,20 +102,9 @@ export const startRegistration = async (
       });
     }
 
-    /*
-     * crypto.randomInt is more suitable for security-sensitive random
-     * values than Math.random().
-     */
     const otpCode = randomInt(100000, 1000000).toString();
-
-    const otpHash = await bcrypt.hash(
-      otpCode,
-      PASSWORD_SALT_ROUNDS
-    );
-
-    const expiresAt = new Date(
-      Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000
-    );
+    const otpHash = await bcrypt.hash(otpCode, PASSWORD_SALT_ROUNDS);
+    const expiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);
 
     await OTP.upsert({
       account_number: accountNumber,
@@ -143,11 +119,6 @@ export const startRegistration = async (
     try {
       await sendRegistrationOTP(email, otpCode);
     } catch (emailError) {
-      /*
-       * Delete the OTP when email delivery fails.
-       * This prevents a registration flow from being left in an
-       * unusable state.
-       */
       await OTP.destroy({
         where: {
           account_number: accountNumber,
@@ -175,14 +146,10 @@ export const startRegistration = async (
   }
 };
 
-/**
- * Step 2:
- * Verify the OTP entered by the customer.
- */
 export const verifyRegistrationOTP = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const accountNumber = normalizeAccountNumber(req.body.accountNumber);
@@ -227,7 +194,7 @@ export const verifyRegistrationOTP = async (
     }
 
     const expiresAt = new Date(
-      otpRecord.getDataValue("expires_at") as string | Date
+      otpRecord.getDataValue("expires_at") as string | Date,
     );
 
     if (expiresAt.getTime() <= Date.now()) {
@@ -251,9 +218,7 @@ export const verifyRegistrationOTP = async (
       });
     }
 
-    const attempts = Number(
-      otpRecord.getDataValue("attempts") ?? 0
-    );
+    const attempts = Number(otpRecord.getDataValue("attempts") ?? 0);
 
     if (attempts >= MAX_OTP_ATTEMPTS) {
       await OTP.destroy({
@@ -277,14 +242,9 @@ export const verifyRegistrationOTP = async (
       });
     }
 
-    const storedOTPHash = String(
-      otpRecord.getDataValue("otp_code")
-    );
+    const storedOTPHash = String(otpRecord.getDataValue("otp_code"));
 
-    const otpMatches = await bcrypt.compare(
-      otpCode,
-      storedOTPHash
-    );
+    const otpMatches = await bcrypt.compare(otpCode, storedOTPHash);
 
     if (!otpMatches) {
       await otpRecord.update({
@@ -305,8 +265,7 @@ export const verifyRegistrationOTP = async (
 
       return res.status(400).json({
         message: "The verification code is incorrect",
-        attemptsRemaining:
-          MAX_OTP_ATTEMPTS - (attempts + 1),
+        attemptsRemaining: MAX_OTP_ATTEMPTS - (attempts + 1),
       });
     }
 
@@ -330,21 +289,15 @@ export const verifyRegistrationOTP = async (
   }
 };
 
-/**
- * Step 3:
- * Create the online banking account after successful OTP verification.
- */
 export const completeRegistration = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   const transaction = await sequelize.transaction();
 
   try {
-    const accountNumber = normalizeAccountNumber(
-      req.body.accountNumber
-    );
+    const accountNumber = normalizeAccountNumber(req.body.accountNumber);
 
     const username = normalizeUsername(req.body.username);
     const password = String(req.body.password ?? "");
@@ -380,20 +333,17 @@ export const completeRegistration = async (
       });
     }
 
-    const otpVerified = Boolean(
-      otpRecord.getDataValue("verified")
-    );
+    const otpVerified = Boolean(otpRecord.getDataValue("verified"));
 
     const expiresAt = new Date(
-      otpRecord.getDataValue("expires_at") as string | Date
+      otpRecord.getDataValue("expires_at") as string | Date,
     );
 
     if (!otpVerified || expiresAt.getTime() <= Date.now()) {
       await transaction.rollback();
 
       return res.status(400).json({
-        message:
-          "OTP verification is incomplete or has expired",
+        message: "OTP verification is incomplete or has expired",
       });
     }
 
@@ -427,10 +377,7 @@ export const completeRegistration = async (
       });
     }
 
-    const passwordHash = await bcrypt.hash(
-      password,
-      PASSWORD_SALT_ROUNDS
-    );
+    const passwordHash = await bcrypt.hash(password, PASSWORD_SALT_ROUNDS);
 
     const newUser = await User.create(
       {
@@ -441,12 +388,9 @@ export const completeRegistration = async (
       },
       {
         transaction,
-      }
+      },
     );
 
-    /*
-     * OTP should only be usable once.
-     */
     await OTP.destroy({
       where: {
         account_number: accountNumber,
@@ -469,8 +413,7 @@ export const completeRegistration = async (
       message: "Online banking account created successfully",
       user: {
         id: newUser.getDataValue("id"),
-        accountNumber:
-          newUser.getDataValue("account_number"),
+        accountNumber: newUser.getDataValue("account_number"),
         username: newUser.getDataValue("username"),
       },
     });
@@ -480,14 +423,10 @@ export const completeRegistration = async (
   }
 };
 
-/**
- * Sign in:
- * Check username and password and return a JWT.
- */
 export const login = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const username = normalizeUsername(req.body.username);
@@ -499,10 +438,6 @@ export const login = async (
       },
     });
 
-    /*
-     * Use the same response for an invalid username and invalid password
-     * so the API does not reveal which usernames exist.
-     */
     if (!user) {
       logAudit({
         action: "LOGIN",
@@ -517,14 +452,9 @@ export const login = async (
       });
     }
 
-    const passwordHash = String(
-      user.getDataValue("password_hash")
-    );
+    const passwordHash = String(user.getDataValue("password_hash"));
 
-    const passwordMatches = await bcrypt.compare(
-      password,
-      passwordHash
-    );
+    const passwordMatches = await bcrypt.compare(password, passwordHash);
 
     if (!passwordMatches) {
       logAudit({
@@ -541,9 +471,7 @@ export const login = async (
       });
     }
 
-    const isVerified = Boolean(
-      user.getDataValue("is_verified")
-    );
+    const isVerified = Boolean(user.getDataValue("is_verified"));
 
     if (!isVerified) {
       logAudit({
@@ -561,31 +489,20 @@ export const login = async (
     }
 
     const jwtSecret = process.env.JWT_SECRET;
-    const refreshTokenSecret =
-      process.env.REFRESH_TOKEN_SECRET;
+    const refreshTokenSecret = process.env.REFRESH_TOKEN_SECRET;
 
     if (!jwtSecret) {
       throw new Error("JWT_SECRET is not configured");
     }
 
     if (!refreshTokenSecret) {
-      throw new Error(
-        "REFRESH_TOKEN_SECRET is not configured"
-      );
+      throw new Error("REFRESH_TOKEN_SECRET is not configured");
     }
 
     const userId = String(user.getDataValue("id"));
-    const accountNumber = String(
-      user.getDataValue("account_number")
-    );
-    const storedUsername = String(
-      user.getDataValue("username")
-    );
+    const accountNumber = String(user.getDataValue("account_number"));
+    const storedUsername = String(user.getDataValue("username"));
 
-    /*
-     * Short-lived access token (15 minutes).
-     * Sent in the response body for the client to store in memory.
-     */
     const accessToken = jwt.sign(
       {
         sub: userId,
@@ -598,14 +515,9 @@ export const login = async (
         expiresIn: "15m",
         issuer: "atlas-banking-api",
         audience: "atlas-banking-client",
-      }
+      },
     );
 
-    /*
-     * Long-lived refresh token (7 days).
-     * Sent as an httpOnly cookie so it is inaccessible to client-side
-     * JavaScript and resistant to XSS attacks.
-     */
     const refreshToken = jwt.sign(
       {
         sub: userId,
@@ -618,7 +530,7 @@ export const login = async (
         expiresIn: "7d",
         issuer: "atlas-banking-api",
         audience: "atlas-banking-client",
-      }
+      },
     );
 
     const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
@@ -655,14 +567,10 @@ export const login = async (
   }
 };
 
-/**
- * Refresh:
- * Read the httpOnly refresh-token cookie and issue a new access token.
- */
 export const refreshAccessToken = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const refreshToken = req.cookies?.refreshToken;
@@ -673,28 +581,21 @@ export const refreshAccessToken = async (
       });
     }
 
-    const refreshTokenSecret =
-      process.env.REFRESH_TOKEN_SECRET;
+    const refreshTokenSecret = process.env.REFRESH_TOKEN_SECRET;
     const jwtSecret = process.env.JWT_SECRET;
 
     if (!refreshTokenSecret || !jwtSecret) {
-      throw new Error(
-        "Token secrets are not configured"
-      );
+      throw new Error("Token secrets are not configured");
     }
 
     let payload: jwt.JwtPayload;
 
     try {
-      const decoded = jwt.verify(
-        refreshToken,
-        refreshTokenSecret,
-        {
-          algorithms: ["HS256"],
-          issuer: "atlas-banking-api",
-          audience: "atlas-banking-client",
-        }
-      );
+      const decoded = jwt.verify(refreshToken, refreshTokenSecret, {
+        algorithms: ["HS256"],
+        issuer: "atlas-banking-api",
+        audience: "atlas-banking-client",
+      });
 
       if (typeof decoded === "string") {
         return res.status(401).json({
@@ -705,15 +606,10 @@ export const refreshAccessToken = async (
       payload = decoded;
     } catch {
       return res.status(401).json({
-        message:
-          "The refresh token is invalid or has expired",
+        message: "The refresh token is invalid or has expired",
       });
     }
 
-    /*
-     * Verify the user still exists before issuing
-     * a new access token.
-     */
     const user = await User.findOne({
       where: {
         id: payload.sub,
@@ -727,12 +623,8 @@ export const refreshAccessToken = async (
     }
 
     const userId = String(user.getDataValue("id"));
-    const accountNumber = String(
-      user.getDataValue("account_number")
-    );
-    const username = String(
-      user.getDataValue("username")
-    );
+    const accountNumber = String(user.getDataValue("account_number"));
+    const username = String(user.getDataValue("username"));
 
     const accessToken = jwt.sign(
       {
@@ -746,7 +638,7 @@ export const refreshAccessToken = async (
         expiresIn: "15m",
         issuer: "atlas-banking-api",
         audience: "atlas-banking-client",
-      }
+      },
     );
 
     return res.status(200).json({
@@ -770,27 +662,16 @@ const maskEmail = (email: string): string => {
   }
 
   const visibleCharacters = localPart.slice(0, 2);
-  const hiddenCharacters = "*".repeat(
-    Math.max(localPart.length - 2, 3)
-  );
+  const hiddenCharacters = "*".repeat(Math.max(localPart.length - 2, 3));
 
   return `${visibleCharacters}${hiddenCharacters}@${domain}`;
 };
 
-/**
- * Password reset step 1:
- * Validate the customer's username, account number and email,
- * then email a single-use password-reset link.
- */
 export const requestPasswordReset = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
-  /*
-   * Always return the same response when the supplied information
-   * does not match. This helps prevent account enumeration.
-   */
   const genericResponse = {
     message:
       "If the provided details match an account, a password-reset link will be sent to the registered email address",
@@ -798,9 +679,7 @@ export const requestPasswordReset = async (
 
   try {
     const username = normalizeUsername(req.body.username);
-    const accountNumber = normalizeAccountNumber(
-      req.body.accountNumber
-    );
+    const accountNumber = normalizeAccountNumber(req.body.accountNumber);
     const email = normalizeEmail(req.body.email);
 
     const user = await User.findOne({
@@ -824,39 +703,25 @@ export const requestPasswordReset = async (
       return res.status(200).json(genericResponse);
     }
 
-    const registeredEmail = normalizeEmail(
-      customer.getDataValue("email")
-    );
+    const registeredEmail = normalizeEmail(customer.getDataValue("email"));
 
     if (registeredEmail !== email) {
       return res.status(200).json(genericResponse);
     }
 
-    const passwordResetURL =
-      process.env.PASSWORD_RESET_URL;
+    const passwordResetURL = process.env.PASSWORD_RESET_URL;
 
     if (!passwordResetURL) {
-      throw new Error(
-        "PASSWORD_RESET_URL is not configured"
-      );
+      throw new Error("PASSWORD_RESET_URL is not configured");
     }
 
-    /*
-     * Generate 32 random bytes and encode them as hexadecimal.
-     * This creates a 64-character, high-entropy reset token.
-     */
     const resetToken = randomBytes(32).toString("hex");
     const tokenHash = hashResetToken(resetToken);
 
     const expiresAt = new Date(
-      Date.now() +
-        PASSWORD_RESET_EXPIRY_MINUTES * 60 * 1000
+      Date.now() + PASSWORD_RESET_EXPIRY_MINUTES * 60 * 1000,
     );
 
-    /*
-     * Upsert ensures that only the newest reset link remains active
-     * for this account.
-     */
     await PasswordReset.upsert({
       account_number: accountNumber,
       token_hash: tokenHash,
@@ -865,20 +730,15 @@ export const requestPasswordReset = async (
     });
 
     const resetLink =
-      `${passwordResetURL}?token=` +
-      encodeURIComponent(resetToken);
+      `${passwordResetURL}?token=` + encodeURIComponent(resetToken);
 
     try {
       await sendPasswordResetEmail(
         registeredEmail,
         resetLink,
-        PASSWORD_RESET_EXPIRY_MINUTES
+        PASSWORD_RESET_EXPIRY_MINUTES,
       );
     } catch (emailError) {
-      /*
-       * Delete the token when email delivery fails so an inaccessible
-       * reset request is not left active.
-       */
       await PasswordReset.destroy({
         where: {
           account_number: accountNumber,
@@ -904,25 +764,17 @@ export const requestPasswordReset = async (
   }
 };
 
-/**
- * Password reset step 2:
- * Validate the reset token and replace the current password.
- */
 export const resetPassword = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   const transaction = await sequelize.transaction();
 
   try {
-    const resetToken = String(
-      req.body.token ?? ""
-    ).trim();
+    const resetToken = String(req.body.token ?? "").trim();
 
-    const newPassword = String(
-      req.body.password ?? ""
-    );
+    const newPassword = String(req.body.password ?? "");
 
     const tokenHash = hashResetToken(resetToken);
 
@@ -938,15 +790,12 @@ export const resetPassword = async (
       await transaction.rollback();
 
       return res.status(400).json({
-        message:
-          "The password-reset link is invalid or has already been used",
+        message: "The password-reset link is invalid or has already been used",
       });
     }
 
     const expiresAt = new Date(
-      resetRecord.getDataValue("expires_at") as
-        | string
-        | Date
+      resetRecord.getDataValue("expires_at") as string | Date,
     );
 
     if (expiresAt.getTime() <= Date.now()) {
@@ -960,14 +809,11 @@ export const resetPassword = async (
       await transaction.commit();
 
       return res.status(400).json({
-        message:
-          "The password-reset link has expired. Request a new link.",
+        message: "The password-reset link has expired. Request a new link.",
       });
     }
 
-    const accountNumber = String(
-      resetRecord.getDataValue("account_number")
-    );
+    const accountNumber = String(resetRecord.getDataValue("account_number"));
 
     const user = await User.findOne({
       where: {
@@ -992,18 +838,11 @@ export const resetPassword = async (
       });
     }
 
-    const currentPasswordHash = String(
-      user.getDataValue("password_hash")
-    );
+    const currentPasswordHash = String(user.getDataValue("password_hash"));
 
-    /*
-     * Optional but useful:
-     * Prevent the customer from resetting the password to exactly
-     * the same password currently in use.
-     */
     const sameAsCurrentPassword = await bcrypt.compare(
       newPassword,
-      currentPasswordHash
+      currentPasswordHash,
     );
 
     if (sameAsCurrentPassword) {
@@ -1019,14 +858,13 @@ export const resetPassword = async (
       });
 
       return res.status(400).json({
-        message:
-          "The new password must be different from the current password",
+        message: "The new password must be different from the current password",
       });
     }
 
     const newPasswordHash = await bcrypt.hash(
       newPassword,
-      PASSWORD_SALT_ROUNDS
+      PASSWORD_SALT_ROUNDS,
     );
 
     await user.update(
@@ -1035,13 +873,9 @@ export const resetPassword = async (
       },
       {
         transaction,
-      }
+      },
     );
 
-    /*
-     * Delete the reset request after successful use.
-     * The link can therefore only be used once.
-     */
     await PasswordReset.destroy({
       where: {
         account_number: accountNumber,
@@ -1069,14 +903,10 @@ export const resetPassword = async (
   }
 };
 
-/**
- * Sign out:
- * Clear the refresh token cookie.
- */
 export const logout = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     res.clearCookie("refreshToken", {
