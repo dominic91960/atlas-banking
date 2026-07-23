@@ -20,6 +20,10 @@ const CustomerAccount = sequelize.define(
       type: DataTypes.DECIMAL(15, 2),
       defaultValue: 0,
     },
+    account_name: {
+      type: DataTypes.STRING(150),
+      allowNull: true,
+    },
   },
   {
     tableName: 'customer_accounts',
