@@ -4,6 +4,7 @@ import { body } from "express-validator";
 import {
   startTransaction,
   verifyTransactionOTP,
+  getRecentTransactions,
 } from "../controllers/transaction.controller.js";
 
 import authenticate from "../middleware/authenticate.js";
@@ -21,6 +22,15 @@ const router = Router();
  * Every route in this router requires a valid JWT.
  */
 router.use(authenticate);
+
+/**
+ * Get the authenticated customer's
+ * recent transaction history.
+ */
+router.get(
+  "/recent",
+  getRecentTransactions
+);
 
 /*
  * Step 1:

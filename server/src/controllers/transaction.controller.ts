@@ -535,6 +535,163 @@ export const verifyTransactionOTP = async (
   }
 };
 
+/**
+ * Return recent incoming and outgoing transactions
+ * for the authenticated customer.
+ */
+export const getRecentTransactions = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const accountNumber = String(
+      res.locals.auth.accountNumber
+    );
+
+    const requestedLimit = Number(req.query.limit ?? 10);
+    const requestedPage = Number(req.query.page ?? 1);
+
+    const limit = Math.min(
+      Math.max(
+        Number.isInteger(requestedLimit)
+          ? requestedLimit
+          : 10,
+        1
+      ),
+      50
+    );
+
+    const page = Math.max(
+      Number.isInteger(requestedPage)
+        ? requestedPage
+        : 1,
+      1
+    );
+
+    const offset = (page - 1) * limit;
+
+    const {
+      count,
+      rows: transactions,
+    } = await BankTransaction.findAndCountAll({
+      where: {
+        status: "COMPLETED",
+
+        [Op.or]: [
+          {
+            sender_account_number: accountNumber,
+          },
+          {
+            receiver_account_number: accountNumber,
+          },
+        ],
+      },
+
+      order: [
+        ["created_at", "DESC"],
+      ],
+
+      limit,
+      offset,
+    });
+
+    const formattedTransactions =
+      transactions.map((transaction) => {
+        const senderAccountNumber = String(
+          transaction.getDataValue(
+            "sender_account_number"
+          )
+        );
+
+        const receiverAccountNumber = String(
+          transaction.getDataValue(
+            "receiver_account_number"
+          )
+        );
+
+        const isOutgoing =
+          senderAccountNumber === accountNumber;
+
+        const amount = String(
+          transaction.getDataValue("amount")
+        );
+
+        const balanceAfter = String(
+          transaction.getDataValue(
+            isOutgoing
+              ? "sender_balance_after"
+              : "receiver_balance_after"
+          )
+        );
+
+        const counterpartyAccountNumber =
+          isOutgoing
+            ? receiverAccountNumber
+            : senderAccountNumber;
+
+        const reference =
+          transaction.getDataValue("reference");
+
+        return {
+          id: transaction.getDataValue("id"),
+
+          name:
+            reference ||
+            (isOutgoing
+              ? `Transfer to ${maskAccountNumber(
+                  counterpartyAccountNumber
+                )}`
+              : `Transfer from ${maskAccountNumber(
+                  counterpartyAccountNumber
+                )}`),
+
+          date:
+            transaction.getDataValue(
+              "created_at"
+            ),
+
+          type: isOutgoing
+            ? "DEBIT"
+            : "CREDIT",
+
+          amount,
+
+          signedAmount: isOutgoing
+            ? `-${amount}`
+            : `+${amount}`,
+
+          balance: balanceAfter,
+
+          counterpartyAccountNumber:
+            maskAccountNumber(
+              counterpartyAccountNumber
+            ),
+
+          reference: reference ?? null,
+
+          status:
+            transaction.getDataValue(
+              "status"
+            ),
+        };
+      });
+
+    return res.status(200).json({
+      transactions: formattedTransactions,
+
+      pagination: {
+        page,
+        limit,
+        totalRecords: count,
+        totalPages: Math.ceil(count / limit),
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const normalizeReference = (
   value: unknown
 ): string | null => {
