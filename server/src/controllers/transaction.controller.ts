@@ -13,6 +13,10 @@ import CustomerAccount from "../models/customer-account.js";
 import TransferRequest from "../models/transfer-request.js";
 import BankTransaction from "../models/bank-transaction.js";
 import { sendTransactionOTP } from "../services/email.service.js";
+import {
+  logAudit,
+  getClientIp,
+} from "../services/audit-log.service.js";
 
 const OTP_EXPIRY_MINUTES = 5;
 const MAX_OTP_ATTEMPTS = 5;
@@ -54,6 +58,16 @@ export const startTransaction = async (
     if (
       senderAccountNumber === receiverAccountNumber
     ) {
+      logAudit({
+        action: "TRANSFER_START",
+        status: "FAILURE",
+        userId: Number(res.locals.auth.sub),
+        ipAddress: getClientIp(req),
+        userAgent: req.headers["user-agent"],
+        resource: senderAccountNumber,
+        details: { reason: "Self-transfer attempt" },
+      });
+
       return res.status(400).json({
         message:
           "You cannot transfer money to the same account",
@@ -65,6 +79,16 @@ export const startTransaction = async (
     );
 
     if (!sender) {
+      logAudit({
+        action: "TRANSFER_START",
+        status: "FAILURE",
+        userId: Number(res.locals.auth.sub),
+        ipAddress: getClientIp(req),
+        userAgent: req.headers["user-agent"],
+        resource: senderAccountNumber,
+        details: { reason: "Sender account not found" },
+      });
+
       return res.status(404).json({
         message: "The sender account was not found",
       });
@@ -75,6 +99,16 @@ export const startTransaction = async (
     );
 
     if (!receiver) {
+      logAudit({
+        action: "TRANSFER_START",
+        status: "FAILURE",
+        userId: Number(res.locals.auth.sub),
+        ipAddress: getClientIp(req),
+        userAgent: req.headers["user-agent"],
+        resource: receiverAccountNumber,
+        details: { reason: "Receiver account not found" },
+      });
+
       return res.status(400).json({
         message:
           "The receiver account number is invalid",
@@ -86,6 +120,19 @@ export const startTransaction = async (
     );
 
     if (amount.greaterThan(senderBalance)) {
+      logAudit({
+        action: "TRANSFER_START",
+        status: "FAILURE",
+        userId: Number(res.locals.auth.sub),
+        ipAddress: getClientIp(req),
+        userAgent: req.headers["user-agent"],
+        resource: senderAccountNumber,
+        details: {
+          reason: "Insufficient balance",
+          amount: amount.toFixed(2),
+        },
+      });
+
       return res.status(400).json({
         message:
           "The account balance is insufficient for this transaction",
@@ -159,6 +206,19 @@ export const startTransaction = async (
       throw emailError;
     }
 
+    logAudit({
+      action: "TRANSFER_START",
+      status: "SUCCESS",
+      userId: Number(res.locals.auth.sub),
+      ipAddress: getClientIp(req),
+      userAgent: req.headers["user-agent"],
+      resource: senderAccountNumber,
+      details: {
+        transferRequestId: transferRequest.getDataValue("id"),
+        amount: amount.toFixed(2),
+      },
+    });
+
     return res.status(200).json({
       message:
         "A transaction verification code was sent to your registered email address",
@@ -227,6 +287,16 @@ export const verifyTransactionOTP = async (
     if (!transferRequest) {
       await transaction.rollback();
 
+      logAudit({
+        action: "TRANSFER_OTP_VERIFY",
+        status: "FAILURE",
+        userId: Number(res.locals.auth.sub),
+        ipAddress: getClientIp(req),
+        userAgent: req.headers["user-agent"],
+        resource: transferRequestId,
+        details: { reason: "Invalid transfer request" },
+      });
+
       return res.status(400).json({
         message:
           "The transaction request is invalid",
@@ -239,6 +309,16 @@ export const verifyTransactionOTP = async (
 
     if (status !== "PENDING") {
       await transaction.rollback();
+
+      logAudit({
+        action: "TRANSFER_OTP_VERIFY",
+        status: "FAILURE",
+        userId: Number(res.locals.auth.sub),
+        ipAddress: getClientIp(req),
+        userAgent: req.headers["user-agent"],
+        resource: transferRequestId,
+        details: { reason: "Transfer no longer active", status },
+      });
 
       return res.status(409).json({
         message:
@@ -264,6 +344,16 @@ export const verifyTransactionOTP = async (
 
       await transaction.commit();
 
+      logAudit({
+        action: "TRANSFER_OTP_VERIFY",
+        status: "FAILURE",
+        userId: Number(res.locals.auth.sub),
+        ipAddress: getClientIp(req),
+        userAgent: req.headers["user-agent"],
+        resource: transferRequestId,
+        details: { reason: "OTP expired" },
+      });
+
       return res.status(400).json({
         message:
           "The transaction verification code has expired",
@@ -286,6 +376,16 @@ export const verifyTransactionOTP = async (
       );
 
       await transaction.commit();
+
+      logAudit({
+        action: "TRANSFER_OTP_VERIFY",
+        status: "FAILURE",
+        userId: Number(res.locals.auth.sub),
+        ipAddress: getClientIp(req),
+        userAgent: req.headers["user-agent"],
+        resource: transferRequestId,
+        details: { reason: "Too many OTP attempts" },
+      });
 
       return res.status(429).json({
         message:
@@ -320,6 +420,19 @@ export const verifyTransactionOTP = async (
       );
 
       await transaction.commit();
+
+      logAudit({
+        action: "TRANSFER_OTP_VERIFY",
+        status: "FAILURE",
+        userId: Number(res.locals.auth.sub),
+        ipAddress: getClientIp(req),
+        userAgent: req.headers["user-agent"],
+        resource: transferRequestId,
+        details: {
+          reason: "Incorrect OTP",
+          attemptsRemaining: Math.max(MAX_OTP_ATTEMPTS - newAttempts, 0),
+        },
+      });
 
       return res.status(400).json({
         message:
@@ -420,6 +533,19 @@ export const verifyTransactionOTP = async (
 
       await transaction.commit();
 
+      logAudit({
+        action: "TRANSFER_OTP_VERIFY",
+        status: "FAILURE",
+        userId: Number(res.locals.auth.sub),
+        ipAddress: getClientIp(req),
+        userAgent: req.headers["user-agent"],
+        resource: transferRequestId,
+        details: {
+          reason: "Insufficient balance after lock",
+          amount: amount.toFixed(2),
+        },
+      });
+
       return res.status(400).json({
         message:
           "The account balance is no longer sufficient for this transaction",
@@ -501,6 +627,19 @@ export const verifyTransactionOTP = async (
     );
 
     await transaction.commit();
+
+    logAudit({
+      action: "TRANSFER_COMPLETE",
+      status: "SUCCESS",
+      userId: Number(res.locals.auth.sub),
+      ipAddress: getClientIp(req),
+      userAgent: req.headers["user-agent"],
+      resource: senderAccountNumber,
+      details: {
+        transactionId: completedTransaction.getDataValue("id"),
+        amount: amount.toFixed(2),
+      },
+    });
 
     return res.status(200).json({
       message:

@@ -16,6 +16,11 @@ import transactionRoutes from "./routes/transaction.routes.js";
 // MUST REMOVE: db test
 import Employee from "./models/employee.js";
 
+/*
+ * Import AuditLog so Sequelize registers the model.
+ */
+import "./models/audit-log.js";
+
 const app: Application = express();
 const PORT = process.env.PORT!;
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN!;
@@ -23,6 +28,12 @@ const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN!;
 app.use(express.json());
 app.use(cookieParser());
 app.use(helmet());
+
+/*
+ * Trust the first proxy hop so req.ip and
+ * x-forwarded-for reflect the real client address.
+ */
+app.set("trust proxy", 1);
 app.use(
   cors({
     origin: CLIENT_ORIGIN,
@@ -80,6 +91,7 @@ app.use(errorHandler);
 const startServer = async () => {
   try {
     await sequelize.authenticate();
+    await sequelize.sync();
     app.listen(PORT, () => {
       console.log(`Application is running at http://localhost:${PORT}`);
     });

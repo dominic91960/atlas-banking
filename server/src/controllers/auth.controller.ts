@@ -19,6 +19,10 @@ import {
   sendPasswordResetEmail,
 } from "../services/email.service.js";
 import PasswordReset from "../models/password-reset.js";
+import {
+  logAudit,
+  getClientIp,
+} from "../services/audit-log.service.js";
 
 
 const OTP_EXPIRY_MINUTES = 5;
@@ -76,6 +80,15 @@ export const startRegistration = async (
     });
 
     if (!customer) {
+      logAudit({
+        action: "REGISTRATION_START",
+        status: "FAILURE",
+        ipAddress: getClientIp(req),
+        userAgent: req.headers["user-agent"],
+        resource: accountNumber,
+        details: { reason: "Invalid account details" },
+      });
+
       return res.status(400).json({
         message: "The provided account details could not be verified",
       });
@@ -88,6 +101,15 @@ export const startRegistration = async (
     });
 
     if (existingUser) {
+      logAudit({
+        action: "REGISTRATION_START",
+        status: "FAILURE",
+        ipAddress: getClientIp(req),
+        userAgent: req.headers["user-agent"],
+        resource: accountNumber,
+        details: { reason: "Account already registered" },
+      });
+
       return res.status(409).json({
         message: "An online banking account already exists",
       });
@@ -135,6 +157,14 @@ export const startRegistration = async (
       throw emailError;
     }
 
+    logAudit({
+      action: "REGISTRATION_START",
+      status: "SUCCESS",
+      ipAddress: getClientIp(req),
+      userAgent: req.headers["user-agent"],
+      resource: accountNumber,
+    });
+
     return res.status(200).json({
       message: "A verification code was sent to the registered email address",
       email: maskEmail(email),
@@ -165,6 +195,15 @@ export const verifyRegistrationOTP = async (
     });
 
     if (!otpRecord) {
+      logAudit({
+        action: "REGISTRATION_OTP_VERIFY",
+        status: "FAILURE",
+        ipAddress: getClientIp(req),
+        userAgent: req.headers["user-agent"],
+        resource: accountNumber,
+        details: { reason: "No active verification request" },
+      });
+
       return res.status(400).json({
         message: "No active verification request was found",
       });
@@ -173,6 +212,15 @@ export const verifyRegistrationOTP = async (
     const verified = Boolean(otpRecord.getDataValue("verified"));
 
     if (verified) {
+      logAudit({
+        action: "REGISTRATION_OTP_VERIFY",
+        status: "FAILURE",
+        ipAddress: getClientIp(req),
+        userAgent: req.headers["user-agent"],
+        resource: accountNumber,
+        details: { reason: "OTP already verified" },
+      });
+
       return res.status(409).json({
         message: "This verification code has already been verified",
       });
@@ -189,6 +237,15 @@ export const verifyRegistrationOTP = async (
         },
       });
 
+      logAudit({
+        action: "REGISTRATION_OTP_VERIFY",
+        status: "FAILURE",
+        ipAddress: getClientIp(req),
+        userAgent: req.headers["user-agent"],
+        resource: accountNumber,
+        details: { reason: "OTP expired" },
+      });
+
       return res.status(400).json({
         message: "The verification code has expired",
       });
@@ -203,6 +260,15 @@ export const verifyRegistrationOTP = async (
         where: {
           account_number: accountNumber,
         },
+      });
+
+      logAudit({
+        action: "REGISTRATION_OTP_VERIFY",
+        status: "FAILURE",
+        ipAddress: getClientIp(req),
+        userAgent: req.headers["user-agent"],
+        resource: accountNumber,
+        details: { reason: "Too many OTP attempts" },
       });
 
       return res.status(429).json({
@@ -225,6 +291,18 @@ export const verifyRegistrationOTP = async (
         attempts: attempts + 1,
       });
 
+      logAudit({
+        action: "REGISTRATION_OTP_VERIFY",
+        status: "FAILURE",
+        ipAddress: getClientIp(req),
+        userAgent: req.headers["user-agent"],
+        resource: accountNumber,
+        details: {
+          reason: "Incorrect OTP",
+          attemptsRemaining: MAX_OTP_ATTEMPTS - (attempts + 1),
+        },
+      });
+
       return res.status(400).json({
         message: "The verification code is incorrect",
         attemptsRemaining:
@@ -234,6 +312,14 @@ export const verifyRegistrationOTP = async (
 
     await otpRecord.update({
       verified: true,
+    });
+
+    logAudit({
+      action: "REGISTRATION_OTP_VERIFY",
+      status: "SUCCESS",
+      ipAddress: getClientIp(req),
+      userAgent: req.headers["user-agent"],
+      resource: accountNumber,
     });
 
     return res.status(200).json({
@@ -370,6 +456,15 @@ export const completeRegistration = async (
 
     await transaction.commit();
 
+    logAudit({
+      action: "REGISTRATION_COMPLETE",
+      status: "SUCCESS",
+      userId: newUser.getDataValue("id") as number,
+      ipAddress: getClientIp(req),
+      userAgent: req.headers["user-agent"],
+      resource: accountNumber,
+    });
+
     return res.status(201).json({
       message: "Online banking account created successfully",
       user: {
@@ -409,6 +504,14 @@ export const login = async (
      * so the API does not reveal which usernames exist.
      */
     if (!user) {
+      logAudit({
+        action: "LOGIN",
+        status: "FAILURE",
+        ipAddress: getClientIp(req),
+        userAgent: req.headers["user-agent"],
+        details: { reason: "Invalid username" },
+      });
+
       return res.status(401).json({
         message: "Invalid username or password",
       });
@@ -424,6 +527,15 @@ export const login = async (
     );
 
     if (!passwordMatches) {
+      logAudit({
+        action: "LOGIN",
+        status: "FAILURE",
+        userId: user.getDataValue("id") as number,
+        ipAddress: getClientIp(req),
+        userAgent: req.headers["user-agent"],
+        details: { reason: "Invalid password" },
+      });
+
       return res.status(401).json({
         message: "Invalid username or password",
       });
@@ -434,6 +546,15 @@ export const login = async (
     );
 
     if (!isVerified) {
+      logAudit({
+        action: "LOGIN",
+        status: "FAILURE",
+        userId: user.getDataValue("id") as number,
+        ipAddress: getClientIp(req),
+        userAgent: req.headers["user-agent"],
+        details: { reason: "Account not verified" },
+      });
+
       return res.status(403).json({
         message: "This account has not been verified",
       });
@@ -508,6 +629,15 @@ export const login = async (
       sameSite: "strict",
       maxAge: SEVEN_DAYS_MS,
       path: "/",
+    });
+
+    logAudit({
+      action: "LOGIN",
+      status: "SUCCESS",
+      userId: Number(userId),
+      ipAddress: getClientIp(req),
+      userAgent: req.headers["user-agent"],
+      resource: accountNumber,
     });
 
     return res.status(200).json({
@@ -759,6 +889,15 @@ export const requestPasswordReset = async (
       throw emailError;
     }
 
+    logAudit({
+      action: "PASSWORD_RESET_REQUEST",
+      status: "SUCCESS",
+      userId: user.getDataValue("id") as number,
+      ipAddress: getClientIp(req),
+      userAgent: req.headers["user-agent"],
+      resource: accountNumber,
+    });
+
     return res.status(200).json(genericResponse);
   } catch (error) {
     next(error);
@@ -870,6 +1009,15 @@ export const resetPassword = async (
     if (sameAsCurrentPassword) {
       await transaction.rollback();
 
+      logAudit({
+        action: "PASSWORD_RESET_COMPLETE",
+        status: "FAILURE",
+        ipAddress: getClientIp(req),
+        userAgent: req.headers["user-agent"],
+        resource: accountNumber,
+        details: { reason: "Same as current password" },
+      });
+
       return res.status(400).json({
         message:
           "The new password must be different from the current password",
@@ -903,6 +1051,14 @@ export const resetPassword = async (
 
     await transaction.commit();
 
+    logAudit({
+      action: "PASSWORD_RESET_COMPLETE",
+      status: "SUCCESS",
+      ipAddress: getClientIp(req),
+      userAgent: req.headers["user-agent"],
+      resource: accountNumber,
+    });
+
     return res.status(200).json({
       message:
         "Your password has been reset successfully. You can now sign in with your new password.",
@@ -928,6 +1084,13 @@ export const logout = async (
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",
       path: "/",
+    });
+
+    logAudit({
+      action: "LOGOUT",
+      status: "SUCCESS",
+      ipAddress: getClientIp(req),
+      userAgent: req.headers["user-agent"],
     });
 
     return res.status(200).json({
