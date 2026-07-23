@@ -18,17 +18,24 @@ const columns: ColumnDef<Transaction>[] = [
   {
     accessorKey: "date",
     header: "Date",
+    cell: ({ getValue }) => {
+      const dateStr = getValue() as string;
+      return new Date(dateStr).toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      });
+    },
   },
   {
     accessorKey: "amount",
     header: "Amount (LKR)",
     cell: ({ row }) => {
-      const amount = row.original.amount;
+      const { type, signedAmount } = row.original;
 
       return (
-        <span className={amount >= 0 ? "text-success" : "text-error"}>
-          {amount >= 0 ? "+" : "-"}
-          {Math.abs(amount).toFixed(2)}
+        <span className={type === "CREDIT" ? "text-success" : "text-error"}>
+          {signedAmount}
         </span>
       );
     },
@@ -37,7 +44,7 @@ const columns: ColumnDef<Transaction>[] = [
     accessorKey: "balance",
     header: "Balance (LKR)",
     cell: ({ getValue }) =>
-      Number(getValue()).toLocaleString(undefined, {
+      parseFloat(getValue() as string).toLocaleString(undefined, {
         minimumFractionDigits: 2,
       }),
   },
