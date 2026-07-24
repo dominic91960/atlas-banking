@@ -23,6 +23,7 @@ env:
 
   GHCR_PAT: ${{ secrets.GHCR_PAT }}
   NPM_NETWORK: ${{ secrets.NPM_NETWORK }}
+  DB_NETWORK: ${{ secrets.DB_NETWORK }}
 
   SERVER_CONTAINER: ${{ github.event.repository.name }}-server
   SERVER_ENV_B64: ${{ secrets.SERVER_ENV_B64 }}
@@ -169,7 +170,7 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          envs: SERVER_CONTAINER,SERVER_IMAGE,GHCR_PAT,NPM_NETWORK,SERVER_ENV_B64,GITHUB_USER
+          envs: SERVER_CONTAINER,SERVER_IMAGE,GHCR_PAT,NPM_NETWORK,DB_NETWORK,SERVER_ENV_B64,GITHUB_USER
           script: |
             echo "$GHCR_PAT" | docker login ghcr.io -u $GITHUB_USER --password-stdin
 
@@ -192,6 +193,7 @@ jobs:
 
             rm -f .env
             docker network connect $NPM_NETWORK $SERVER_CONTAINER || true
+            docker network connect $DB_NETWORK $SERVER_CONTAINER || true
             docker update --restart=always $SERVER_CONTAINER
 
   cleanup-vps:
